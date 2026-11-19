@@ -10,6 +10,7 @@
 #include "app/services/PlaybackStateAuthority.h"
 #include "app/services/PlaybackValidationPort.h"
 #include "app/services/PreviewPlaybackPort.h"
+#include "app/services/TimelineSurface.h"
 #include "audio/PreviewAudioDeviceChangePolicy.h"
 #include "audio/PreviewAudioDeviceCutoff.h"
 #include "app/runtime/playback/PlaybackIdentityGate.h"
@@ -262,6 +263,9 @@ public:
     double applyVisualClockSmoothing(double audioSecond, double fallbackSecond, bool hasAudioClock);
     void resetVisualClockSmoothing();
     void jumpToNearestTimelineNote(double second, int lane);
+    // Graphical charting on the timeline, against the revision the gesture's
+    // command was issued for.
+    void handleTimelineAuthoring(const miacode::TimelineAuthoringGesture& gesture, quint64 documentRevision);
 
     bool playing() const;
     miacode::PlaybackTransportState playbackTransportState() const;

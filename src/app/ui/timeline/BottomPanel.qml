@@ -13,6 +13,10 @@ Item {
     required property var preferences
     required property var timelineSession
     required property var previewSession
+    // Graphical charting tool state; while a tool is active the timeline body
+    // places, moves and selects notes instead of scrolling.
+    property var noteAuthoring: null
+    readonly property bool noteAuthoringActive: root.noteAuthoring !== null && root.noteAuthoring.tool !== 0
     property bool guideSettingsActive: false
     readonly property bool guideSettingsAvailable: root.guideSettingsActive
         && root.visible && timelineItem.visible
@@ -179,6 +183,43 @@ Item {
         onTimelineUserInteractionStarted: root.timelineSession.userInteractionStarted()
         onTimelineSurfaceReady: root.timelineSession.surfaceReady()
         onFollowPreviewToggled: enabled => root.timelineSession.followPreviewToggled(enabled)
+        noteAuthoringEnabled: root.noteAuthoringActive
+        authoringSpanEnabled: root.noteAuthoringActive
+                              && (root.noteAuthoring.tool === 2 || root.noteAuthoring.tool === 5)
+        onAuthoringGesture: (kind, secondary, second, endSecond, lane, endLane, onNote) =>
+            root.timelineSession.authoringGesture(kind, secondary, second, endSecond, lane, endLane, onNote)
+        onAuthoringDeleteRequested: root.noteAuthoring.deleteSelection()
+
+        // Selection box and drop cell of the charting gestures.
+        Rectangle {
+            visible: timelineItem.authoringBoxRect.width > 0
+            x: timelineItem.authoringBoxRect.x
+            y: timelineItem.authoringBoxRect.y
+            width: timelineItem.authoringBoxRect.width
+            height: timelineItem.authoringBoxRect.height
+            color: Qt.alpha(Theme.colors.accent.focus, 0.14)
+            border.color: Theme.colors.accent.focus
+            border.width: 1
+        }
+        Rectangle {
+            visible: timelineItem.authoringDropRect.width > 0
+            x: timelineItem.authoringDropRect.x
+            y: timelineItem.authoringDropRect.y
+            width: timelineItem.authoringDropRect.width
+            height: timelineItem.authoringDropRect.height
+            radius: 3
+            color: "transparent"
+            border.color: Theme.colors.accent.focus
+            border.width: 1
+        }
+        // The editor drops a selection once its text changes.
+        Connections {
+            target: root.noteAuthoring
+            function onStatusChanged() {
+                if (root.noteAuthoring.selectionCount === 0)
+                    timelineItem.clearAuthoringSelection()
+            }
+        }
     }
 
     Tooltip {

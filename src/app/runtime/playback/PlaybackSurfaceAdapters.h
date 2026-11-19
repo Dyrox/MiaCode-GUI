@@ -76,6 +76,8 @@ public:
     void wheelNavigateToSecond(double second) override;
     void timelineDragStarted() override;
     void timelineDragFinished(double second) override;
+    void timelineAuthoring(const miacode::TimelineCommandStamp& stamp,
+                           const miacode::TimelineAuthoringGesture& gesture) override;
     void timelineUserInteractionStarted() override;
     void setFollowPreviewEnabled(bool enabled) override;
     QString bottomTabsCurrentTabId() const override;

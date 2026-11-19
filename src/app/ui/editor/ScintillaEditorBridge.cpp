@@ -1,4 +1,5 @@
 #include "app/ui/editor/ScintillaEditorBridge.h"
+#include "editor/NoteAuthoringBatch.h"
 #include "editor/SimaiCompletionCatalog.h"
 #include "common/DebugLog.h"
 #include "common/DebugOptions.h"
@@ -426,6 +427,11 @@ void ScintillaEditorBridge::synchronizeDocument()
 void ScintillaEditorBridge::textMutated()
 {
     if (!ready_ || synchronizing_ || handlingIme_) return;
+    // Note selections are positions in the text they were made on.
+    if (!noteSelection_.notes.isEmpty()) {
+        noteSelection_ = {};
+        publishAuthoringStatus(QString());
+    }
     if (documentSession_) {
         QScopedValueRollback guard(synchronizing_, true);
         documentSession_->setChartText(document_.text());
@@ -724,17 +730,61 @@ void ScintillaEditorBridge::touchAuthoring(const QString& pad, QChar separator, 
     }
 }
 void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRequest& request, int difficulty,
-                                          qulonglong revision, int anchor, int position)
+                                          qulonglong, int, int)
 {
-    using Action = miacode::editor::NoteAuthoringAction;
-    if (!documentSession_ || !controller_ || imeComposing_ || difficulty != documentSession_->currentDifficultyId()
-        || revision != documentSession_->documentRevision()) return;
+    namespace edit = miacode::editor;
+    using Action = edit::NoteAuthoringAction;
+    if (!documentSession_ || !controller_ || imeComposing_ || difficulty != documentSession_->currentDifficultyId()) return;
     const QString text = document_.text();
-    miacode::editor::NoteAuthoringRequest resolved = request;
+    const qulonglong revision = documentSession_->documentRevision();
+    // Caret requests act on the live caret: a burst of clicks or keys is
+    // queued before the first one lands, and each must see the one before.
+    const int anchor = document_.utf16Position(send(SCI_GETANCHOR));
+    const int position = cursorPosition();
+    // Timeline requests name positions in the text they were resolved
+    // against, so they only apply to that revision.
+    const bool explicitPositions = request.line > 0 || !request.notes.isEmpty();
+    if (explicitPositions && request.sourceRevision != revision) return;
+    if (request.action == Action::StepToken) {
+        const int target = edit::stepTokenPosition(text, position, request.step);
+        if (target < 0) return;
+        QScopedValueRollback guard(programmatic_, true);
+        select(target, target);
+        send(SCI_SCROLLCARET);
+        publishContext(true);
+        publishTouchAnchor(target);
+        return;
+    }
     int tokenPosition = position;
+    if (request.line > 0) {
+        tokenPosition = edit::textPositionAt(text, request.line, request.column);
+        if (tokenPosition < 0) return;
+    }
+    const auto applyPlan = [&](const edit::NoteAuthoringEditPlan& plan) {
+        if (!plan.valid) return;
+        applyAuthoring(controller_->authoringReplacement(text, anchor, position, plan.replaceStart,
+            plan.replaceStart + plan.removalLength, plan.insertionText, plan.tokenStart));
+    };
+    const auto applyText = [&](const QString& edited) {
+        const edit::TextReplacement replacement = edit::minimalReplacement(text, edited);
+        if (!replacement.changed) return;
+        applyAuthoring(controller_->authoringReplacement(text, anchor, position, replacement.start,
+            replacement.end, replacement.text, edit::chartTokenStartAt(edited, replacement.start)));
+    };
+    const auto selectionPositions = [&]() {
+        QVector<int> positions;
+        if (noteSelection_.scope != document_.scope() || noteSelection_.revision != revision) return positions;
+        for (const QPoint& note : noteSelection_.notes) {
+            const int notePosition = edit::textPositionAt(text, note.y(), note.x());
+            if (notePosition >= 0) positions.append(notePosition);
+        }
+        return positions;
+    };
+
+    edit::NoteAuthoringRequest resolved = request;
     switch (request.action) {
     case Action::HoldBegin:
-        holdAnchor_ = {document_.scope(), revision, miacode::editor::chartTokenStartAt(text, position)};
+        holdAnchor_ = {document_.scope(), revision, edit::chartTokenStartAt(text, tokenPosition)};
         forceActiveFocus();
         return;
     case Action::HoldCancel:
@@ -744,8 +794,8 @@ void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRe
         const HoldAnchor start = std::exchange(holdAnchor_, HoldAnchor{});
         // Any edit between the two clicks moves the remembered token.
         if (start.tokenStart < 0 || start.scope != document_.scope() || start.revision != revision) return;
-        const int endToken = miacode::editor::chartTokenStartAt(text, position);
-        QString length = miacode::editor::beatDurationBetween(text, start.tokenStart, endToken);
+        const int endToken = edit::chartTokenStartAt(text, tokenPosition);
+        QString length = edit::beatDurationBetween(text, start.tokenStart, endToken);
         if (length.isEmpty()) length = request.defaultDuration;
         resolved.action = Action::Add;
         resolved.item = request.item + length;
@@ -753,14 +803,108 @@ void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRe
         tokenPosition = qMin(start.tokenStart, endToken);
         break;
     }
-    default:
+    case Action::ExtendSlide:
+        applyPlan(edit::planSlideExtension(text, tokenPosition, request.target, request.item));
+        return;
+    case Action::Move: {
+        const int target = edit::textPositionAt(text, request.targetLine, request.targetColumn);
+        if (target >= 0) applyText(edit::moveNote(text, tokenPosition, target, request.laneDelta));
+        return;
+    }
+    case Action::SelectNotes:
+        noteSelection_ = NoteSelection{document_.scope(), revision, request.notes};
+        publishAuthoringStatus(noteSelection_.notes.isEmpty() ? QString()
+            : qtTrId("qml.charting.status_selected").arg(noteSelection_.notes.size()));
+        return;
+    case Action::CopySelection:
+    case Action::CutSelection: {
+        const QVector<int> positions = selectionPositions();
+        if (positions.isEmpty()) {
+            publishAuthoringStatus(qtTrId("qml.charting.status_no_selection"));
+            return;
+        }
+        noteClip_ = edit::copyNotes(text, positions);
+        if (request.action == Action::CopySelection) {
+            publishAuthoringStatus(qtTrId("qml.charting.status_copied").arg(noteClip_.size()));
+            return;
+        }
+        noteSelection_ = {};
+        applyText(edit::removeNotes(text, positions));
+        publishAuthoringStatus(qtTrId("qml.charting.status_cut").arg(noteClip_.size()));
+        return;
+    }
+    case Action::DeleteSelection: {
+        const QVector<int> positions = selectionPositions();
+        if (positions.isEmpty()) {
+            publishAuthoringStatus(qtTrId("qml.charting.status_no_selection"));
+            return;
+        }
+        int removed = 0;
+        const QString edited = edit::removeNotes(text, positions, &removed);
+        noteSelection_ = {};
+        applyText(edited);
+        publishAuthoringStatus(qtTrId("qml.charting.status_deleted").arg(removed));
+        return;
+    }
+    case Action::Paste: {
+        if (noteClip_.isEmpty()) return;
+        int placed = 0;
+        int skipped = 0;
+        applyText(edit::pasteNotes(text, tokenPosition, noteClip_, &placed, &skipped));
+        publishAuthoringStatus(skipped > 0
+            ? qtTrId("qml.charting.status_paste_skipped").arg(placed).arg(skipped)
+            : qtTrId("qml.charting.status_pasted").arg(placed));
+        return;
+    }
+    case Action::StepToken:
+        return;
+    case Action::SetBpm:
+    case Action::SetDivision:
+        applyPlan(edit::planTokenControl(text, tokenPosition,
+            request.action == Action::SetBpm ? QLatin1Char('(') : QLatin1Char('{'), request.item));
+        return;
+    case Action::Remove:
+        if (!request.notes.isEmpty()) {
+            QVector<int> positions;
+            for (const QPoint& note : request.notes) {
+                const int notePosition = edit::textPositionAt(text, note.y(), note.x());
+                if (notePosition >= 0) positions.append(notePosition);
+            }
+            applyText(edit::removeNotes(text, positions));
+            return;
+        }
+        break;
+    case Action::Add:
+        if (request.lengthLine > 0) {
+            // A hold dragged along the timeline: its length runs to the token
+            // under the release point.
+            const int endToken = edit::textPositionAt(text, request.lengthLine, request.lengthColumn);
+            if (endToken < 0) return;
+            const int from = edit::chartTokenStartAt(text, tokenPosition);
+            const int to = edit::chartTokenStartAt(text, endToken);
+            QString length = edit::beatDurationBetween(text, from, to);
+            if (length.isEmpty()) length = request.defaultDuration;
+            resolved.item = request.item + length;
+            tokenPosition = qMin(from, to);
+        }
+        break;
+    case Action::Toggle:
         break;
     }
+    applyAuthoring(controller_->noteAuthoring(text, anchor, position, tokenPosition, resolved));
+}
+void ScintillaEditorBridge::applyAuthoring(const miacode::editor::SimaiTextEditResult& result)
+{
     QScopedValueRollback guard(programmatic_, true);
-    const auto tx = controller_->noteAuthoring(text, anchor, position, tokenPosition, resolved);
-    if (applyEditorTransaction(tx)) {
+    if (applyEditorTransaction(result) && result.transaction.hasEdit) {
         forceActiveFocus();
-        publishTouchAnchor(tx.transaction.touchTokenStart);
+        publishTouchAnchor(result.transaction.touchTokenStart);
+    }
+}
+void ScintillaEditorBridge::publishAuthoringStatus(const QString& message)
+{
+    if (syncController_) {
+        syncController_->publishNoteAuthoringStatus(noteSelection_.notes.size(), noteClip_.size(), message);
     }
 }
 void ScintillaEditorBridge::undo()

@@ -36,6 +36,8 @@ public:
     void timelineUserInteractionStarted() override;
     void setFollowPreviewEnabled(const TimelineCommandStamp& stamp, bool enabled) override;
     void setFollowPreviewEnabled(bool enabled) override;
+    void timelineAuthoring(const TimelineCommandStamp& stamp,
+                           const miacode::TimelineAuthoringGesture& gesture) override;
     QString bottomTabsCurrentTabId() const override;
     void setBottomTabsCurrentTabId(const TimelineCommandStamp& stamp,
                                    const QString& tabId) override;

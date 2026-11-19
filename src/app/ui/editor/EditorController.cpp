@@ -294,14 +294,22 @@ miacode::editor::SimaiTextEditResult EditorController::noteAuthoring(
     const QString& text, int anchor, int position, int tokenPosition,
     const miacode::editor::NoteAuthoringRequest& request) const
 {
-    auto result = untouched(text, anchor, position);
     const auto plan = miacode::editor::planNoteAuthoringEdit(
         text, tokenPosition, request.action, request.target, request.item);
-    if (!plan.valid) return result;
-    const int start = qBound(0, plan.replaceStart, int(text.size()));
-    const int end = qBound(start, start + plan.removalLength, int(text.size()));
-    const int insertedEnd = start + plan.insertionText.size();
-    const int delta = plan.insertionText.size() - (end - start);
+    if (!plan.valid) return untouched(text, anchor, position);
+    return authoringReplacement(text, anchor, position, plan.replaceStart,
+                                plan.replaceStart + plan.removalLength, plan.insertionText, plan.tokenStart);
+}
+
+miacode::editor::SimaiTextEditResult EditorController::authoringReplacement(
+    const QString& text, int anchor, int position, int start, int end, const QString& replacement,
+    int tokenStart) const
+{
+    auto result = untouched(text, anchor, position);
+    start = qBound(0, start, int(text.size()));
+    end = qBound(start, end, int(text.size()));
+    const int insertedEnd = start + replacement.size();
+    const int delta = replacement.size() - (end - start);
     const auto shifted = [&](int caret) {
         if (caret >= end) return caret + delta;
         return caret > start ? insertedEnd : caret;
@@ -311,9 +319,9 @@ miacode::editor::SimaiTextEditResult EditorController::noteAuthoring(
     tx.hasEdit = true;
     tx.replacementStart = start;
     tx.replacementEnd = end;
-    tx.replacementText = plan.insertionText;
+    tx.replacementText = replacement;
     tx.anchor = tx.position = shifted(position);
-    tx.touchTokenStart = plan.tokenStart;
+    tx.touchTokenStart = tokenStart;
     return result;
 }
 

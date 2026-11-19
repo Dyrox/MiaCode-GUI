@@ -2,6 +2,7 @@
 
 #include <limits>
 
+#include <QPoint>
 #include <QString>
 #include <QVector>
 
@@ -91,6 +92,12 @@ public:
         double touchFlowSpeed = miacode::preview_gameplay::kPreviewTimingDefaultFlowSpeed) const;
     bool resolveTimelineNavigateCursor(double second, int* line, int* col, double* cursorSecond) const;
     bool resolveNearestTimelineNote(double second, int lane, int* line, int* col, double* noteSecond) const;
+    // The beat start (a token start after a comma or at a line start) nearest
+    // to `second`, for snapping timeline edits to the chart's own grid.
+    bool resolveNearestCursorAnchorForSecond(double second, int* line, int* col, double* anchorSecond) const;
+    // Source positions (x = column, y = line) of notes whose start lies in
+    // [startSecond, endSecond] on lanes firstLane..lastLane.
+    QVector<QPoint> notePositionsInRange(double startSecond, double endSecond, int firstLane, int lastLane) const;
     bool resolvePreviewFollowSelectionRange(int line, int anchorCol, int* startCol, int* endCol) const;
     bool resolvePreviewFollowBinding(double second, PreviewFollowBinding* binding) const;
     bool resolvePreviewFollowSpan(double second, PreviewFollowSpan* span, double* anchorSecond = nullptr) const;

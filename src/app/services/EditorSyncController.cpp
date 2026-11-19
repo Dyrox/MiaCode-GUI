@@ -79,6 +79,11 @@ bool EditorSyncController::requestTouchPadAuthoring(
     return true;
 }
 
+void EditorSyncController::publishNoteAuthoringStatus(int selectionCount, int clipCount, const QString& message)
+{
+    emit noteAuthoringStatusPublished(selectionCount, clipCount, message);
+}
+
 bool EditorSyncController::requestNoteAuthoring(const miacode::editor::NoteAuthoringRequest& noteRequest)
 {
     if (!editorContextActive() || noteRequest.target.trimmed().isEmpty()) {
@@ -467,7 +472,13 @@ void EditorSyncController::scheduleAuthoringDelivery()
     QMetaObject::invokeMethod(this, [this] {
         authoringDeliveryQueued_ = false;
         const AuthoringRequest request = pendingAuthoringRequests_.dequeue();
-        if (readinessAccepts(request.difficultyId, request.revision) && !imeComposing_) {
+        // Note requests are checked again by the editor against its live
+        // caret and text, so a burst queued before the first edit lands is
+        // not dropped for the revision that edit advanced.
+        const bool accepted = request.note
+            ? editorVisible_ && request.difficultyId > 0 && request.difficultyId == readyDifficultyId_
+            : readinessAccepts(request.difficultyId, request.revision);
+        if (accepted && !imeComposing_) {
             if (request.note) {
                 emit noteAuthoringRequested(
                     request.noteRequest,

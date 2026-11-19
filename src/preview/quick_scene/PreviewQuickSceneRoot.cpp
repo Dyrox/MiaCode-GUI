@@ -545,14 +545,21 @@ void PreviewQuickSceneRoot::updateHoveredTouchPadAtItemPoint(const QPointF& item
 
 void PreviewQuickSceneRoot::hoverMoveEvent(QHoverEvent* event)
 {
-    if (event != nullptr) {
-        updateHoveredTouchPadAtItemPoint(event->position());
+    if (event != nullptr && runtime_ != nullptr) {
+        runtime_->setHoveredTouchPad(touchPadAtItemPoint(event->position()));
+        // Qt Quick repeats hover at an unmoved pointer after frame updates;
+        // only a real move may replace the target arrow keys moved to.
+        if (event->position() != lastHoverPosition_) {
+            lastHoverPosition_ = event->position();
+            updateHoveredTouchPadAtItemPoint(event->position());
+        }
     }
     QQuickItem::hoverMoveEvent(event);
 }
 
 void PreviewQuickSceneRoot::hoverLeaveEvent(QHoverEvent* event)
 {
+    lastHoverPosition_ = QPointF(-1.0, -1.0);
     if (runtime_ != nullptr) {
         runtime_->setHoveredTouchPad(QString());
         runtime_->clearNoteAuthoringHover();

@@ -112,6 +112,14 @@ void TimelineHost::timelineDragFinished(const TimelineCommandStamp& stamp, doubl
     }
 }
 
+void TimelineHost::timelineAuthoring(const TimelineCommandStamp& stamp,
+                                     const miacode::TimelineAuthoringGesture& gesture)
+{
+    if (acceptCommand(stamp)) {
+        legacySurface_->timelineAuthoring(stamp, gesture);
+    }
+}
+
 void TimelineHost::timelineUserInteractionStarted()
 {
     timelineUserInteractionStarted(issueCommandStamp());

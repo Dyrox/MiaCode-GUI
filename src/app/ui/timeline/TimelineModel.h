@@ -68,6 +68,9 @@ public:
     Q_INVOKABLE void userInteractionStarted();
     Q_INVOKABLE void surfaceReady();
     Q_INVOKABLE void followPreviewToggled(bool enabled);
+    // TimelineQuickItem::authoringGesture, forwarded with a command stamp.
+    Q_INVOKABLE void authoringGesture(int kind, bool secondary, double second, double endSecond,
+                                      int lane, int endLane, bool onNote);
 
 signals:
     void tabsChanged();

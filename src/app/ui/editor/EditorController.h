@@ -58,6 +58,11 @@ public:
     miacode::editor::SimaiTextEditResult noteAuthoring(const QString& text, int anchor, int position,
                                                      int tokenPosition,
                                                      const miacode::editor::NoteAuthoringRequest& request) const;
+    // One undoable replacement of [start, end) with `replacement`; the caret
+    // keeps its place relative to the surrounding text.
+    miacode::editor::SimaiTextEditResult authoringReplacement(const QString& text, int anchor, int position,
+                                                            int start, int end, const QString& replacement,
+                                                            int tokenStart) const;
     void updateCompletion(const QString& text, int position);
     Q_INVOKABLE void moveCompletionSelection(int delta);
     Q_INVOKABLE void selectCompletionIndex(int index);

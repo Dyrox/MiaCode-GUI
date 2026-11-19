@@ -3720,8 +3720,116 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>Hold 起点 %1：移动光标后再点一次</translation>
     </message>
     <message id="qml.charting.hint">
-        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button.</source>
-        <translation>写入编辑器光标所在的拍。左键添加或取消，右键删除。Hold：点起点，移动光标，再点一次。Slide：从起点按键拖到终点按键。</translation>
+        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
+        <translation>写入编辑器光标所在的拍。左键添加或取消，右键删除。Hold：点起点，移动光标，再点一次。Slide：从起点按键拖到终点按键。鼠标在预览上时，←→ 写入并前进一拍，↑↓ 只移动一拍。在时间轴上：点击放置，拖动音符移动它，在空白处拖动框选；用 Hold 工具时沿同一轨拖动画 Hold。</translation>
+    </message>
+    <message id="qml.charting.mode_code">
+        <source>Code</source>
+        <translation>代码</translation>
+    </message>
+    <message id="qml.charting.mode_gui">
+        <source>GUI</source>
+        <translation>GUI</translation>
+    </message>
+    <message id="qml.charting.mode_hint">
+        <source>Chart in the simai text, or in the vertical lane editor. The text stays the source either way.</source>
+        <translation>用 simai 文本写谱，或用竖向轨道编辑器写谱。两种方式改的都是同一份正文。</translation>
+    </message>
+    <message id="qml.charting.head_star">
+        <source>Star head</source>
+        <translation>星头</translation>
+    </message>
+    <message id="qml.charting.head_tap">
+        <source>Tap head @</source>
+        <translation>Tap 头 @</translation>
+    </message>
+    <message id="qml.charting.head_none">
+        <source>No head ?</source>
+        <translation>无头 ?</translation>
+    </message>
+    <message id="qml.charting.head_none_now">
+        <source>No head !</source>
+        <translation>无头即出 !</translation>
+    </message>
+    <message id="qml.charting.slide_break">
+        <source>Break track</source>
+        <translation>Break 轨</translation>
+    </message>
+    <message id="qml.charting.chain">
+        <source>Chain</source>
+        <translation>连段</translation>
+    </message>
+    <message id="qml.charting.chain_hint">
+        <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>
+        <translation>每次拖动都从上一段的终点接着画。右键结束连段。</translation>
+    </message>
+    <message id="qml.charting.chain_pending">
+        <source>Chain continues from %1</source>
+        <translation>从 %1 号键继续连段</translation>
+    </message>
+    <message id="qml.charting.step_back">
+        <source>Previous beat</source>
+        <translation>上一拍</translation>
+    </message>
+    <message id="qml.charting.step_forward">
+        <source>Next beat</source>
+        <translation>下一拍</translation>
+    </message>
+    <message id="qml.charting.copy">
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message id="qml.charting.cut">
+        <source>Cut</source>
+        <translation>剪切</translation>
+    </message>
+    <message id="qml.charting.delete">
+        <source>Delete</source>
+        <translation>删除</translation>
+    </message>
+    <message id="qml.charting.paste">
+        <source>Paste</source>
+        <translation>粘贴</translation>
+    </message>
+    <message id="qml.charting.paste_hint">
+        <source>Writes the copied notes from the caret beat on, keeping their spacing.</source>
+        <translation>从光标所在的拍开始写入复制的音符，保持原有间隔。</translation>
+    </message>
+    <message id="qml.charting.bpm_hint">
+        <source>BPM written at the caret beat (Enter)</source>
+        <translation>在光标所在拍写入 BPM（回车）</translation>
+    </message>
+    <message id="qml.charting.division_hint">
+        <source>Subdivision {N} written at the caret beat (Enter)</source>
+        <translation>在光标所在拍写入分音 {N}（回车）</translation>
+    </message>
+    <message id="qml.charting.status_selected">
+        <source>%1 notes selected</source>
+        <translation>已选中 %1 个音符</translation>
+    </message>
+    <message id="qml.charting.status_no_selection">
+        <source>Select notes on the timeline first by dragging over empty space</source>
+        <translation>先在时间轴空白处拖动框选音符</translation>
+    </message>
+    <message id="qml.charting.status_copied">
+        <source>%1 notes copied</source>
+        <translation>已复制 %1 个音符</translation>
+    </message>
+    <message id="qml.charting.status_cut">
+        <source>%1 notes cut</source>
+        <translation>已剪切 %1 个音符</translation>
+    </message>
+    <message id="qml.charting.status_deleted">
+        <source>%1 notes deleted</source>
+        <translation>已删除 %1 个音符</translation>
+    </message>
+    <message id="qml.charting.status_pasted">
+        <source>%1 notes pasted</source>
+        <translation>已粘贴 %1 个音符</translation>
+    </message>
+    <message id="qml.charting.status_paste_skipped">
+        <source>%1 notes pasted, %2 skipped: no beat there</source>
+        <translation>已粘贴 %1 个音符，%2 个所在位置没有对应的拍，已跳过</translation>
     </message>
     <message id="menu.preview_rendering_mode">
         <source>Rendering Mode</source>

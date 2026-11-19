@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import MiaCode.UI
+import MiaCode.Timeline
 
 Item {
     id: root
@@ -18,6 +19,11 @@ Item {
     required property var pages
     required property var net
     required property var netUpload
+    // GUI charting: the vertical lane editor covers the code view, which keeps
+    // running underneath so edits still go through its undo history.
+    property var noteAuthoring: null
+    property var timelineSession: null
+    readonly property bool guiCharting: root.noteAuthoring !== null && root.noteAuthoring.guiMode
 
     readonly property Item sourceEditorItem: sourceEditor
     readonly property Item difficultyFieldsItem: difficultyHeader
@@ -396,6 +402,65 @@ Item {
         preferences: root.preferences
         onNormalizeChartRequested: root.pages.openNormalizeWholeChart()
         onCompletionSettingsRequested: function(group) { root.completionSettingsRequested(group) }
+    }
+
+    TimelineLaneEditorItem {
+        id: laneEditor
+        anchors.fill: sourceEditor
+        visible: root.sourceVisible && root.guiCharting && root.timelineSession !== null
+        stateBridge: root.timelineSession ? root.timelineSession.stateBridge : null
+        noteAuthoringEnabled: visible && root.noteAuthoring.tool !== 0
+        authoringSpanEnabled: root.noteAuthoring !== null
+                              && (root.noteAuthoring.tool === 2 || root.noteAuthoring.tool === 5)
+        onAuthoringGesture: (kind, secondary, second, endSecond, lane, endLane, onNote) =>
+            root.timelineSession.authoringGesture(kind, secondary, second, endSecond, lane, endLane, onNote)
+        onAuthoringDeleteRequested: root.noteAuthoring.deleteSelection()
+        onNavigateRequested: second => root.timelineSession.headerNavigate(second)
+
+        // The editor drops a selection once its text changes.
+        Connections {
+            target: root.noteAuthoring
+            function onStatusChanged() {
+                if (root.noteAuthoring.selectionCount === 0)
+                    laneEditor.clearAuthoringSelection()
+            }
+        }
+    }
+
+    // 代码 / GUI: how this difficulty is charted.
+    Row {
+        anchors.top: sourceEditor.top
+        anchors.right: sourceEditor.right
+        anchors.topMargin: 6
+        anchors.rightMargin: 18
+        z: 2
+        spacing: 2
+        visible: root.sourceVisible && root.noteAuthoring !== null
+
+        Repeater {
+            model: [
+                { gui: false, label: qsTrId("qml.charting.mode_code") },
+                { gui: true, label: qsTrId("qml.charting.mode_gui") }
+            ]
+            delegate: AppChoiceButton {
+                id: modeButton
+                required property var modelData
+                text: modelData.label
+                checked: root.guiCharting === modelData.gui
+                onCheckedChanged: {
+                    if (modeButton.checked === (root.guiCharting === modeButton.modelData.gui))
+                        return
+                    if (modeButton.checked)
+                        root.noteAuthoring.guiMode = modeButton.modelData.gui
+                    modeButton.checked = Qt.binding(() => root.guiCharting === modeButton.modelData.gui)
+                }
+
+                Tooltip {
+                    visible: parent.hovered
+                    text: qsTrId("qml.charting.mode_hint")
+                }
+            }
+        }
     }
 
     Flickable {

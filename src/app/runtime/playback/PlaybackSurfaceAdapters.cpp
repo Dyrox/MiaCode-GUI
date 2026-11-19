@@ -301,6 +301,14 @@ void PlaybackTimelineSurfaceAdapter::timelineDragFinished(double second)
     }
 }
 
+void PlaybackTimelineSurfaceAdapter::timelineAuthoring(const miacode::TimelineCommandStamp& stamp,
+                                                       const miacode::TimelineAuthoringGesture& gesture)
+{
+    if (coordinator_ != nullptr) {
+        coordinator_->handleTimelineAuthoring(gesture, stamp.documentRevision);
+    }
+}
+
 void PlaybackTimelineSurfaceAdapter::timelineUserInteractionStarted()
 {
     if (coordinator_ != nullptr) {

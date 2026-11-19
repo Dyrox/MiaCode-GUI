@@ -474,6 +474,7 @@ add_executable(MiaCode WIN32 MACOSX_BUNDLE
     src/app/runtime/settings/PreferenceDocumentProvider.cpp
     src/app/runtime/preview/StageMediaRoute.cpp
     src/app/runtime/preview/WarmupAndSettings.cpp
+    src/app/runtime/playback/TimelineAuthoring.cpp
     src/app/runtime/playback/TimelineFlow.cpp
     src/app/runtime/playback/SessionForwarding.TimelineFlow.cpp
     src/app/runtime/playback/FollowSync.cpp

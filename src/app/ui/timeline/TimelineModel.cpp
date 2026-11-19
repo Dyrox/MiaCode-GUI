@@ -112,6 +112,19 @@ void TimelineModel::dragFinished(double second)
     }
 }
 
+void TimelineModel::authoringGesture(int kind, bool secondary, double second, double endSecond,
+                                     int lane, int endLane, bool onNote)
+{
+    using Kind = miacode::TimelineAuthoringGesture::Kind;
+    if (kind < int(Kind::Click) || kind > int(Kind::Box)) {
+        return;
+    }
+    if (auto* current = surface(); current != nullptr) {
+        current->timelineAuthoring(current->issueCommandStamp(),
+                                   {Kind(kind), secondary, second, endSecond, lane, endLane, onNote});
+    }
+}
+
 void TimelineModel::userInteractionStarted()
 {
     if (auto* current = surface(); current != nullptr) {

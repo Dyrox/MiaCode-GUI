@@ -546,6 +546,8 @@ Item {
                         net: root.net
                         netUpload: root.netUpload
                         pages: root.pages
+                        noteAuthoring: root.noteAuthoring
+                        timelineSession: root.timelineSession
                         onOpenRequested: root.openRequested()
                         onCompletionSettingsRequested: function(group) { root.completionSettingsRequested(group) }
                     }
@@ -571,6 +573,7 @@ Item {
                     preferences: root.preferences
                     timelineSession: root.timelineSession
                     previewSession: root.previewSession
+                    noteAuthoring: root.noteAuthoring
                     SplitView.minimumHeight: bottomPanelSnap.constrained
                         ? bottomPanelSnap.targetSize : bottomPanelSnap.minimumSize
                     SplitView.maximumHeight: bottomPanelSnap.constrained

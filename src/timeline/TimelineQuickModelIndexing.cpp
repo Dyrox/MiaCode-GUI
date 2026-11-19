@@ -183,6 +183,72 @@ bool TimelineQuickModel::resolvePreviousCursorAnchorForSecond(
     return true;
 }
 
+bool TimelineQuickModel::resolveNearestCursorAnchorForSecond(
+    double second,
+    int* line,
+    int* col,
+    double* anchorSecond) const
+{
+    if (cursorAnchorsBySecond_.isEmpty()) {
+        return false;
+    }
+    const auto next = std::lower_bound(
+        cursorAnchorsBySecond_.cbegin(),
+        cursorAnchorsBySecond_.cend(),
+        second,
+        [](const AbsoluteCursorAnchor& anchor, double target) {
+            return anchor.second < target;
+        });
+    auto best = next;
+    if (next == cursorAnchorsBySecond_.cend()
+        || (next != cursorAnchorsBySecond_.cbegin()
+            && second - std::prev(next)->second <= next->second - second)) {
+        best = std::prev(next);
+    }
+    // A line's end anchor and the next line's start share one second; prefer
+    // the later one so the caret lands on the line that holds the beat.
+    while (std::next(best) != cursorAnchorsBySecond_.cend()
+           && qAbs(std::next(best)->second - best->second) <= kTimelineEpsilon) {
+        ++best;
+    }
+    if (line != nullptr) {
+        *line = best->lineNumber;
+    }
+    if (col != nullptr) {
+        *col = best->sourceCol;
+    }
+    if (anchorSecond != nullptr) {
+        *anchorSecond = best->second;
+    }
+    return true;
+}
+
+QVector<QPoint> TimelineQuickModel::notePositionsInRange(
+    double startSecond,
+    double endSecond,
+    int firstLane,
+    int lastLane) const
+{
+    QVector<QPoint> positions;
+    const double from = qMin(startSecond, endSecond) - kTimelineEpsilon;
+    const double to = qMax(startSecond, endSecond) + kTimelineEpsilon;
+    const int laneFrom = qMin(firstLane, lastLane);
+    const int laneTo = qMax(firstLane, lastLane);
+    for (const int lineIndex : linesWithNotes_) {
+        const LineState& lineState = lines_.at(lineIndex);
+        if (lineState.lastNoteSecond < from || lineState.firstNoteSecond > to) {
+            continue;
+        }
+        for (const TimelineRenderNote& note : lineState.render.notes) {
+            const double noteSecond = timelineRenderAbsoluteSecond(lineState.render, note.secondOffset);
+            if (noteSecond >= from && noteSecond <= to && note.lane >= laneFrom && note.lane <= laneTo) {
+                positions.append(QPoint(note.sourceCol, lineState.lineNumber));
+            }
+        }
+    }
+    return positions;
+}
+
 void TimelineQuickModel::rebuildFollowSelectionRanges(LineState* lineState) const
 {
     if (lineState == nullptr) {

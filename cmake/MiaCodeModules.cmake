@@ -135,6 +135,8 @@ miacode_add_module(miacode_editor_core
         src/editor/BookmarkCommentSyntax.h
         src/editor/ChartTokenScan.cpp
         src/editor/ChartTokenScan.h
+        src/editor/NoteAuthoringBatch.cpp
+        src/editor/NoteAuthoringBatch.h
         src/editor/NoteAuthoringEdit.cpp
         src/editor/NoteAuthoringEdit.h
         src/editor/SimaiCompletionCatalog.cpp
@@ -345,6 +347,8 @@ if(MIACODE_BUILD_APP)
 # ---- timeline_quick: QSG layers, QML module MiaCode.Timeline --------------
 miacode_add_module(miacode_timeline_quick
     SOURCES
+        src/timeline/quick/TimelineLaneEditorItem.cpp
+        src/timeline/quick/TimelineLaneEditorItem.h
         src/timeline/quick/TimelineQuickGridLayer.cpp
         src/timeline/quick/TimelineQuickGridLayer.h
         src/timeline/quick/TimelineQuickGridLinesLayer.cpp

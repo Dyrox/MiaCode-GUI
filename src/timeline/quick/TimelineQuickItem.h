@@ -41,6 +41,15 @@ class TimelineQuickItem : public QQuickItem
     Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
     Q_PROPERTY(QString hoverTooltipText READ hoverTooltipText NOTIFY hoverTooltipChanged)
     Q_PROPERTY(QPointF hoverTooltipPosition READ hoverTooltipPosition NOTIFY hoverTooltipChanged)
+    // Graphical charting: body presses edit notes instead of scrolling.
+    Q_PROPERTY(bool noteAuthoringEnabled READ noteAuthoringEnabled WRITE setNoteAuthoringEnabled
+               NOTIFY noteAuthoringEnabledChanged)
+    // Item-space rectangles for the QML overlay: the box selection, and the
+    // lane cell a pressed note or new note would land in.
+    // Drags along one lane draw holds; any other drag on empty space selects.
+    Q_PROPERTY(bool authoringSpanEnabled MEMBER authoringSpanEnabled_ NOTIFY authoringSpanEnabledChanged)
+    Q_PROPERTY(QRectF authoringBoxRect READ authoringBoxRect NOTIFY authoringOverlayChanged)
+    Q_PROPERTY(QRectF authoringDropRect READ authoringDropRect NOTIFY authoringOverlayChanged)
 
 public:
     explicit TimelineQuickItem(QQuickItem* parent = nullptr);
@@ -77,6 +86,21 @@ public:
     Q_INVOKABLE void stepZoomPreset(int deltaSteps);
     Q_INVOKABLE void setZoomScale(qreal scale);
     Q_INVOKABLE void refreshTheme();
+    Q_INVOKABLE void clearAuthoringSelection();
+
+    // Values of authoringGesture's `kind`.
+    enum AuthoringGestureKind {
+        AuthoringClick = 0,
+        AuthoringSpan = 1,
+        AuthoringMove = 2,
+        AuthoringBox = 3,
+    };
+    Q_ENUM(AuthoringGestureKind)
+
+    bool noteAuthoringEnabled() const { return noteAuthoringEnabled_; }
+    void setNoteAuthoringEnabled(bool enabled);
+    QRectF authoringBoxRect() const { return authoringBoxRect_; }
+    QRectF authoringDropRect() const { return authoringDropRect_; }
 
 signals:
     void stateBridgeChanged();
@@ -99,6 +123,14 @@ signals:
     void followPreviewToggled(bool enabled);
     void viewportLockToggled(bool enabled);
     void followProgressToggled(bool enabled);
+    void noteAuthoringEnabledChanged();
+    void authoringOverlayChanged();
+    void authoringSpanEnabledChanged();
+    // Lanes are 1..8 and 9 for the touch row. `onNote` says the press hit a
+    // note drawn at (second, lane).
+    void authoringGesture(int kind, bool secondary, double second, double endSecond,
+                          int lane, int endLane, bool onNote);
+    void authoringDeleteRequested();
 
 protected:
     QSGNode* updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData* data) override;
@@ -110,6 +142,7 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseUngrabEvent() override;
     void wheelEvent(QWheelEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
@@ -127,6 +160,37 @@ private:
     void applyHeldHorizontalKeyScrollTick();
     void bindRenderCadence(QQuickWindow* window);
     void updateHoverTooltip(const QString& text, const QPointF& position);
+    bool beginAuthoringPress(QMouseEvent* event);
+    void finishAuthoringPress(const QPointF& point);
+    int laneAtY(const miacode::timeline::TimelineSceneState& state, qreal y) const;
+    bool hitNoteAt(const miacode::timeline::TimelineSceneState& state, const QPointF& point,
+                   double* second, int* lane) const;
+    void updateAuthoringOverlay();
+    QRectF laneCellRect(const miacode::timeline::TimelineSceneState& state, qreal x, int lane) const;
+
+    enum class AuthoringDrag {
+        None,
+        Place,
+        MoveNote,
+        Box,
+    };
+    bool noteAuthoringEnabled_ = false;
+    bool authoringSpanEnabled_ = false;
+    AuthoringDrag authoringDrag_ = AuthoringDrag::None;
+    Qt::MouseButton authoringButton_ = Qt::NoButton;
+    QPointF authoringPressPoint_;
+    QPointF authoringCurrentPoint_;
+    double authoringPressSecond_ = 0.0;
+    double authoringPressRawSecond_ = 0.0;
+    bool authoringPressOnNote_ = false;
+    int authoringPressLane_ = 0;
+    bool selectionValid_ = false;
+    double selectionStartSecond_ = 0.0;
+    double selectionEndSecond_ = 0.0;
+    int selectionFirstLane_ = 0;
+    int selectionLastLane_ = 0;
+    QRectF authoringBoxRect_;
+    QRectF authoringDropRect_;
     QPointer<TimelineQuickStateBridge> stateBridge_;
     QMetaObject::Connection bridgeRenderStateConnection_;
     QMetaObject::Connection bridgePlayheadConnection_;

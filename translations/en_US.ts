@@ -3720,8 +3720,116 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>Hold from %1: move the cursor and click again</translation>
     </message>
     <message id="qml.charting.hint">
-        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button.</source>
-        <translation>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button.</translation>
+        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
+        <translation>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</translation>
+    </message>
+    <message id="qml.charting.mode_code">
+        <source>Code</source>
+        <translation>Code</translation>
+    </message>
+    <message id="qml.charting.mode_gui">
+        <source>GUI</source>
+        <translation>GUI</translation>
+    </message>
+    <message id="qml.charting.mode_hint">
+        <source>Chart in the simai text, or in the vertical lane editor. The text stays the source either way.</source>
+        <translation>Chart in the simai text, or in the vertical lane editor. The text stays the source either way.</translation>
+    </message>
+    <message id="qml.charting.head_star">
+        <source>Star head</source>
+        <translation>Star head</translation>
+    </message>
+    <message id="qml.charting.head_tap">
+        <source>Tap head @</source>
+        <translation>Tap head @</translation>
+    </message>
+    <message id="qml.charting.head_none">
+        <source>No head ?</source>
+        <translation>No head ?</translation>
+    </message>
+    <message id="qml.charting.head_none_now">
+        <source>No head !</source>
+        <translation>No head !</translation>
+    </message>
+    <message id="qml.charting.slide_break">
+        <source>Break track</source>
+        <translation>Break track</translation>
+    </message>
+    <message id="qml.charting.chain">
+        <source>Chain</source>
+        <translation>Chain</translation>
+    </message>
+    <message id="qml.charting.chain_hint">
+        <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>
+        <translation>Each drag continues the last slide from where it ended. Right click ends the chain.</translation>
+    </message>
+    <message id="qml.charting.chain_pending">
+        <source>Chain continues from %1</source>
+        <translation>Chain continues from %1</translation>
+    </message>
+    <message id="qml.charting.step_back">
+        <source>Previous beat</source>
+        <translation>Previous beat</translation>
+    </message>
+    <message id="qml.charting.step_forward">
+        <source>Next beat</source>
+        <translation>Next beat</translation>
+    </message>
+    <message id="qml.charting.copy">
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
+    <message id="qml.charting.cut">
+        <source>Cut</source>
+        <translation>Cut</translation>
+    </message>
+    <message id="qml.charting.delete">
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message id="qml.charting.paste">
+        <source>Paste</source>
+        <translation>Paste</translation>
+    </message>
+    <message id="qml.charting.paste_hint">
+        <source>Writes the copied notes from the caret beat on, keeping their spacing.</source>
+        <translation>Writes the copied notes from the caret beat on, keeping their spacing.</translation>
+    </message>
+    <message id="qml.charting.bpm_hint">
+        <source>BPM written at the caret beat (Enter)</source>
+        <translation>BPM written at the caret beat (Enter)</translation>
+    </message>
+    <message id="qml.charting.division_hint">
+        <source>Subdivision {N} written at the caret beat (Enter)</source>
+        <translation>Subdivision {N} written at the caret beat (Enter)</translation>
+    </message>
+    <message id="qml.charting.status_selected">
+        <source>%1 notes selected</source>
+        <translation>%1 notes selected</translation>
+    </message>
+    <message id="qml.charting.status_no_selection">
+        <source>Select notes on the timeline first by dragging over empty space</source>
+        <translation>Select notes on the timeline first by dragging over empty space</translation>
+    </message>
+    <message id="qml.charting.status_copied">
+        <source>%1 notes copied</source>
+        <translation>%1 notes copied</translation>
+    </message>
+    <message id="qml.charting.status_cut">
+        <source>%1 notes cut</source>
+        <translation>%1 notes cut</translation>
+    </message>
+    <message id="qml.charting.status_deleted">
+        <source>%1 notes deleted</source>
+        <translation>%1 notes deleted</translation>
+    </message>
+    <message id="qml.charting.status_pasted">
+        <source>%1 notes pasted</source>
+        <translation>%1 notes pasted</translation>
+    </message>
+    <message id="qml.charting.status_paste_skipped">
+        <source>%1 notes pasted, %2 skipped: no beat there</source>
+        <translation>%1 notes pasted, %2 skipped: no beat there</translation>
     </message>
     <message id="menu.preview_rendering_mode">
         <source>Rendering Mode</source>

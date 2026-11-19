@@ -17,6 +17,29 @@ struct TimelineCommandStamp {
     friend bool operator==(const TimelineCommandStamp&, const TimelineCommandStamp&) = default;
 };
 
+// A graphical charting gesture on the timeline body. Lanes are 1..8, and 9
+// for the touch row.
+struct TimelineAuthoringGesture {
+    enum class Kind {
+        Click,
+        // Press-drag-release along one lane: a hold from `second` to `endSecond`.
+        Span,
+        // A note at (second, lane) dragged to (endSecond, endLane).
+        Move,
+        // Box selection over [second, endSecond] x [lane, endLane]; with
+        // endLane -1, `lane` is a bit mask of lanes (bit n = lane n).
+        Box,
+    };
+    Kind kind = Kind::Click;
+    bool secondary = false;
+    double second = 0.0;
+    double endSecond = 0.0;
+    int lane = 0;
+    int endLane = 0;
+    // The press hit a note drawn at (second, lane).
+    bool onNote = false;
+};
+
 class TimelineSurface
 {
 public:
@@ -85,6 +108,9 @@ public:
     {
         setFollowPreviewEnabled(enabled);
     }
+
+    // Graphical charting on the timeline; ignored by surfaces without it.
+    virtual void timelineAuthoring(const TimelineCommandStamp&, const TimelineAuthoringGesture&) {}
 
     // Bottom tab strip: which tab is showing, and which tabs exist at all —
     // the timeline, 无理 and 校验 tabs each appear only when their content does.

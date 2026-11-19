@@ -2,6 +2,7 @@
 
 #include "app/ui/editor/ScintillaDslStyler.h"
 #include "app/ui/editor/EditorController.h"
+#include "editor/NoteAuthoringBatch.h"
 #include "app/ui/document/DocumentModel.h"
 #include "app/ui/document/AnalysisModel.h"
 #include "app/services/EditorSyncController.h"
@@ -178,6 +179,8 @@ private:
     void touchAuthoring(const QString& pad, QChar separator, int difficulty, qulonglong revision, int anchor, int position);
     void noteAuthoring(const miacode::editor::NoteAuthoringRequest& request, int difficulty, qulonglong revision,
                        int anchor, int position);
+    void applyAuthoring(const miacode::editor::SimaiTextEditResult& result);
+    void publishAuthoringStatus(const QString& message);
     void beginUserInteraction();
     void publishTouchUndoAnchor();
     ScintillaDocumentAdapter document_;
@@ -252,5 +255,13 @@ private:
         int tokenStart = -1;
     };
     HoldAnchor holdAnchor_;
+    // Notes picked on the timeline, as (column, line) in the text at `revision`.
+    struct NoteSelection {
+        QString scope;
+        qulonglong revision = 0;
+        QVector<QPoint> notes;
+    };
+    NoteSelection noteSelection_;
+    QVector<miacode::editor::NoteClipEntry> noteClip_;
 };
 }

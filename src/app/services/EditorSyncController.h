@@ -63,6 +63,9 @@ public:
     bool requestTouchPadAuthoring(const QString& pad, QChar separator);
     // Graphical charting, stamped with the editor context like touch pads.
     bool requestNoteAuthoring(const miacode::editor::NoteAuthoringRequest& request);
+    // The editor reports its note selection, copied notes and the last
+    // command's outcome for the charting toolbar.
+    void publishNoteAuthoringStatus(int selectionCount, int clipCount, const QString& message);
     bool editorContextActive() const;
     EditorSelectionState editorSelection() const;
 
@@ -92,6 +95,7 @@ signals:
     void noteAuthoringRequested(const miacode::editor::NoteAuthoringRequest& request,
                                 int difficultyId, qulonglong revision,
                                 int anchor, int position);
+    void noteAuthoringStatusPublished(int selectionCount, int clipCount, const QString& message);
     void caretLocationPublished(int difficultyId, qulonglong revision, int line, int column);
     void pointerInteractionStarted(int difficultyId);
     void touchPadControlHoldChanged(bool active);

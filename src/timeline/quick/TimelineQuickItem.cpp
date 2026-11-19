@@ -828,7 +828,8 @@ TimelineQuickItem::TimelineQuickItem(QQuickItem* parent)
     , overlayLayer_(std::make_unique<TimelineQuickOverlayLayer>())
 {
     setFlag(ItemHasContents, true);
-    setAcceptedMouseButtons(Qt::LeftButton);
+    // Right clicks only matter while graphical charting erases notes.
+    setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton);
     setAcceptHoverEvents(true);
     setFocus(true);
     heldHorizontalKeyScrollTimer_.setSingleShot(false);
@@ -1153,6 +1154,10 @@ void TimelineQuickItem::syncSourceState()
     }
     if (!canBecomeReady()) {
         updateReadyState(false);
+    }
+    // Scroll and zoom move the selection box with the content.
+    if (selectionValid_) {
+        updateAuthoringOverlay();
     }
     update();
 }
@@ -1615,6 +1620,9 @@ void TimelineQuickItem::geometryChange(const QRectF& newGeometry, const QRectF& 
         viewportUpdatePending_ = true;
         polish();
     }
+    if (selectionValid_) {
+        updateAuthoringOverlay();
+    }
 }
 
 void TimelineQuickItem::updatePolish()
@@ -1683,8 +1691,211 @@ void TimelineQuickItem::bindRenderCadence(QQuickWindow* window)
         });
 }
 
+void TimelineQuickItem::setNoteAuthoringEnabled(bool enabled)
+{
+    if (noteAuthoringEnabled_ == enabled) {
+        return;
+    }
+    noteAuthoringEnabled_ = enabled;
+    authoringDrag_ = AuthoringDrag::None;
+    selectionValid_ = false;
+    updateAuthoringOverlay();
+    emit noteAuthoringEnabledChanged();
+}
+
+void TimelineQuickItem::clearAuthoringSelection()
+{
+    if (!selectionValid_) {
+        return;
+    }
+    selectionValid_ = false;
+    updateAuthoringOverlay();
+}
+
+int TimelineQuickItem::laneAtY(const miacode::timeline::TimelineSceneState& state, qreal y) const
+{
+    if (state.laneHeight <= 0.0) {
+        return 0;
+    }
+    const int index = static_cast<int>(std::floor((y - state.timelineTop) / state.laneHeight));
+    return index >= 0 && index < state.laneCount ? index + 1 : 0;
+}
+
+QRectF TimelineQuickItem::laneCellRect(const miacode::timeline::TimelineSceneState& state, qreal x, int lane) const
+{
+    if (lane <= 0) {
+        return QRectF();
+    }
+    return QRectF(x - state.laneHeight / 2.0,
+                  state.timelineTop + (lane - 1) * state.laneHeight,
+                  state.laneHeight,
+                  state.laneHeight);
+}
+
+bool TimelineQuickItem::hitNoteAt(const miacode::timeline::TimelineSceneState& state, const QPointF& point,
+                                  double* second, int* lane) const
+{
+    const int pointLane = laneAtY(state, point.y());
+    if (pointLane == 0) {
+        return false;
+    }
+    // Sprites and hold spans are laid out in scrolled content space.
+    const qreal reach = state.laneHeight * 0.7;
+    qreal bestDistance = reach;
+    qreal bestX = 0.0;
+    bool found = false;
+    const auto consider = [&](qreal contentX, qreal centerY) {
+        const qreal itemX = contentX - state.horizontalScrollValue;
+        const qreal distance = qAbs(itemX - point.x());
+        if (laneAtY(state, centerY) == pointLane && distance <= bestDistance) {
+            bestDistance = distance;
+            bestX = itemX;
+            found = true;
+        }
+    };
+    for (const auto& sprite : state.noteSprites) {
+        consider(sprite.center.x(), sprite.center.y());
+    }
+    for (const auto& span : state.holdSpans) {
+        consider(span.startX, span.rowTop + span.laneHeight / 2.0);
+    }
+    if (found) {
+        *second = miacode::timeline::TimelineSceneStateBuilder::sceneXToSecond(state, bestX);
+        *lane = pointLane;
+    }
+    return found;
+}
+
+bool TimelineQuickItem::beginAuthoringPress(QMouseEvent* event)
+{
+    if (event->button() != Qt::LeftButton && event->button() != Qt::RightButton) {
+        return false;
+    }
+    // Ctrl/Command clicks keep navigating, as they do outside charting.
+    if (event->modifiers().testFlag(Qt::ControlModifier) || event->modifiers().testFlag(Qt::MetaModifier)) {
+        return false;
+    }
+    const miacode::timeline::TimelineSceneState state = currentSceneState();
+    const QRectF bodyRect(state.timelineLeft, state.timelineTop, width() - state.timelineLeft, state.timelineHeight);
+    const int lane = laneAtY(state, event->position().y());
+    if (!bodyRect.contains(event->position()) || lane == 0) {
+        return false;
+    }
+    forceActiveFocus(Qt::MouseFocusReason);
+    double noteSecond = 0.0;
+    int noteLane = 0;
+    authoringPressOnNote_ = hitNoteAt(state, event->position(), &noteSecond, &noteLane);
+    authoringButton_ = event->button();
+    authoringPressPoint_ = event->position();
+    authoringCurrentPoint_ = event->position();
+    authoringPressRawSecond_ =
+        miacode::timeline::TimelineSceneStateBuilder::sceneXToSecond(state, event->position().x());
+    authoringPressSecond_ = authoringPressOnNote_ ? noteSecond : authoringPressRawSecond_;
+    authoringPressLane_ = lane;
+    if (event->button() == Qt::LeftButton && event->modifiers().testFlag(Qt::ShiftModifier)) {
+        authoringDrag_ = AuthoringDrag::Box;
+    } else if (event->button() == Qt::LeftButton && authoringPressOnNote_) {
+        authoringDrag_ = AuthoringDrag::MoveNote;
+    } else {
+        authoringDrag_ = AuthoringDrag::Place;
+    }
+    updateAuthoringOverlay();
+    event->accept();
+    return true;
+}
+
+void TimelineQuickItem::finishAuthoringPress(const QPointF& point)
+{
+    const miacode::timeline::TimelineSceneState state = currentSceneState();
+    const AuthoringDrag drag = authoringDrag_;
+    authoringDrag_ = AuthoringDrag::None;
+    const bool secondary = authoringButton_ == Qt::RightButton;
+    authoringButton_ = Qt::NoButton;
+    const QPointF delta = point - authoringPressPoint_;
+    const bool moved = qAbs(delta.x()) + qAbs(delta.y()) > 6.0;
+    const double releaseSecond =
+        miacode::timeline::TimelineSceneStateBuilder::sceneXToSecond(state, point.x());
+    const qreal laneBottom = state.timelineTop + state.laneCount * state.laneHeight - 1.0;
+    const int releaseLane = laneAtY(state, qBound<qreal>(state.timelineTop, point.y(), laneBottom));
+
+    switch (drag) {
+    case AuthoringDrag::Box:
+        selectionValid_ = moved;
+        if (moved) {
+            selectionStartSecond_ = qMin(authoringPressRawSecond_, releaseSecond);
+            selectionEndSecond_ = qMax(authoringPressRawSecond_, releaseSecond);
+            selectionFirstLane_ = qMin(authoringPressLane_, releaseLane);
+            selectionLastLane_ = qMax(authoringPressLane_, releaseLane);
+            emit authoringGesture(AuthoringBox, false, selectionStartSecond_, selectionEndSecond_,
+                                  selectionFirstLane_, selectionLastLane_, false);
+        }
+        break;
+    case AuthoringDrag::MoveNote:
+        if (moved && releaseLane > 0) {
+            // Keep the grab offset: the note moves by as much as the pointer.
+            emit authoringGesture(AuthoringMove, false, authoringPressSecond_,
+                                  authoringPressSecond_ + (releaseSecond - authoringPressRawSecond_),
+                                  authoringPressLane_, releaseLane, true);
+        } else {
+            emit authoringGesture(AuthoringClick, false, authoringPressSecond_, authoringPressSecond_,
+                                  authoringPressLane_, authoringPressLane_, true);
+        }
+        break;
+    case AuthoringDrag::Place:
+        if (!secondary) {
+            selectionValid_ = false;
+        }
+        if (!secondary && moved && releaseLane == authoringPressLane_) {
+            emit authoringGesture(AuthoringSpan, false, authoringPressSecond_, releaseSecond,
+                                  authoringPressLane_, releaseLane, false);
+        } else if (!moved) {
+            emit authoringGesture(AuthoringClick, secondary, authoringPressSecond_, authoringPressSecond_,
+                                  authoringPressLane_, authoringPressLane_, authoringPressOnNote_);
+        }
+        break;
+    case AuthoringDrag::None:
+        break;
+    }
+    updateAuthoringOverlay();
+}
+
+void TimelineQuickItem::updateAuthoringOverlay()
+{
+    QRectF box;
+    QRectF drop;
+    if (stateBridge_ != nullptr && (selectionValid_ || authoringDrag_ != AuthoringDrag::None)) {
+        const miacode::timeline::TimelineSceneState state = currentSceneState();
+        if (authoringDrag_ == AuthoringDrag::Box) {
+            box = QRectF(authoringPressPoint_, authoringCurrentPoint_).normalized();
+        } else if (selectionValid_) {
+            const qreal left = miacode::timeline::TimelineSceneStateBuilder::secondToSceneXExact(
+                                   state, selectionStartSecond_) - state.horizontalScrollValue;
+            const qreal right = miacode::timeline::TimelineSceneStateBuilder::secondToSceneXExact(
+                                    state, selectionEndSecond_) - state.horizontalScrollValue;
+            box = QRectF(QPointF(left, state.timelineTop + (selectionFirstLane_ - 1) * state.laneHeight),
+                         QPointF(right, state.timelineTop + selectionLastLane_ * state.laneHeight)).normalized();
+        }
+        if (authoringDrag_ == AuthoringDrag::MoveNote || authoringDrag_ == AuthoringDrag::Place) {
+            const qreal grabOffset = authoringDrag_ == AuthoringDrag::MoveNote
+                ? miacode::timeline::TimelineSceneStateBuilder::secondToSceneXExact(state, authoringPressSecond_)
+                    - state.horizontalScrollValue - authoringPressPoint_.x()
+                : 0.0;
+            drop = laneCellRect(state, authoringCurrentPoint_.x() + grabOffset,
+                                laneAtY(state, authoringCurrentPoint_.y()));
+        }
+    }
+    if (box != authoringBoxRect_ || drop != authoringDropRect_) {
+        authoringBoxRect_ = box;
+        authoringDropRect_ = drop;
+        emit authoringOverlayChanged();
+    }
+}
+
 void TimelineQuickItem::mousePressEvent(QMouseEvent* event)
 {
+    if (event != nullptr && noteAuthoringEnabled_ && beginAuthoringPress(event)) {
+        return;
+    }
     if (event == nullptr || event->button() != Qt::LeftButton) {
         QQuickItem::mousePressEvent(event);
         return;
@@ -1744,6 +1955,20 @@ void TimelineQuickItem::mousePressEvent(QMouseEvent* event)
 
 void TimelineQuickItem::mouseMoveEvent(QMouseEvent* event)
 {
+    if (event != nullptr && authoringDrag_ != AuthoringDrag::None) {
+        authoringCurrentPoint_ = event->position();
+        // A left drag from empty space turns into a box selection unless it
+        // draws a hold along its own lane.
+        const QPointF delta = authoringCurrentPoint_ - authoringPressPoint_;
+        if (authoringDrag_ == AuthoringDrag::Place && authoringButton_ == Qt::LeftButton
+            && qAbs(delta.x()) + qAbs(delta.y()) > 6.0
+            && !(authoringSpanEnabled_ && laneAtY(currentSceneState(), authoringCurrentPoint_.y()) == authoringPressLane_)) {
+            authoringDrag_ = AuthoringDrag::Box;
+        }
+        updateAuthoringOverlay();
+        event->accept();
+        return;
+    }
     if (event == nullptr || !dragActive_ || stateBridge_ == nullptr) {
         QQuickItem::mouseMoveEvent(event);
         return;
@@ -1798,6 +2023,11 @@ void TimelineQuickItem::updateHoverTooltip(const QString& text, const QPointF& p
 
 void TimelineQuickItem::mouseReleaseEvent(QMouseEvent* event)
 {
+    if (event != nullptr && authoringDrag_ != AuthoringDrag::None && event->button() == authoringButton_) {
+        finishAuthoringPress(event->position());
+        event->accept();
+        return;
+    }
     if (event != nullptr && event->button() == Qt::LeftButton && dragActive_) {
         dragActive_ = false;
         if (stateBridge_ != nullptr && followProgressEnabled()) {
@@ -1815,6 +2045,17 @@ void TimelineQuickItem::mouseReleaseEvent(QMouseEvent* event)
         return;
     }
     QQuickItem::mouseReleaseEvent(event);
+}
+
+void TimelineQuickItem::mouseUngrabEvent()
+{
+    // A charting press that loses its grab never finishes; drop it.
+    if (authoringDrag_ != AuthoringDrag::None) {
+        authoringDrag_ = AuthoringDrag::None;
+        authoringButton_ = Qt::NoButton;
+        updateAuthoringOverlay();
+    }
+    QQuickItem::mouseUngrabEvent();
 }
 
 void TimelineQuickItem::wheelEvent(QWheelEvent* event)
@@ -1877,6 +2118,18 @@ void TimelineQuickItem::wheelEvent(QWheelEvent* event)
 
 void TimelineQuickItem::keyPressEvent(QKeyEvent* event)
 {
+    if (event != nullptr && noteAuthoringEnabled_ && event->modifiers() == Qt::NoModifier) {
+        if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
+            emit authoringDeleteRequested();
+            event->accept();
+            return;
+        }
+        if (event->key() == Qt::Key_Escape && selectionValid_) {
+            clearAuthoringSelection();
+            event->accept();
+            return;
+        }
+    }
     if (event != nullptr
         && stateBridge_ != nullptr
         && event->modifiers() == Qt::NoModifier

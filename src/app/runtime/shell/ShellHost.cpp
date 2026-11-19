@@ -6,6 +6,7 @@
 #include "app/runtime/playback/PlaybackCoordinator.h"
 
 #include "app/services/ShortcutRegistry.h"
+#include "preview/runtime/PreviewRuntime.h"
 #include "common/CrashRecovery.h"
 #include "common/DebugLog.h"
 #include "common/DebugOptions.h"
@@ -130,6 +131,24 @@ bool Session::eventFilter(QObject*, QEvent* event)
             }
             event->accept();
             return true;
+        }
+
+        // Graphical charting: arrow keys over a highlighted preview target
+        // write there and step a beat (Left/Right), or only step (Up/Down).
+        if (event->type() == QEvent::KeyPress
+            && focusOnWorkbench
+            && scene_ != nullptr
+            && keyEvent->modifiers() == Qt::NoModifier
+            && (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right
+                || keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
+            const QString hovered = scene_->noteAuthoringHoverTarget();
+            if (!hovered.isEmpty() && editorAuthoringContextActive()) {
+                const QString next = applicationServices_.noteAuthoring().keyboardStep(keyEvent->key(), hovered);
+                if (!next.isEmpty()) {
+                    scene_->setNoteAuthoringKeyboardTarget(next);
+                    return true;
+                }
+            }
         }
 
         // Ctrl (Command on macOS) arms touch-pad authoring on the preview from

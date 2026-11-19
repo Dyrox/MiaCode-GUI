@@ -92,6 +92,7 @@ private:
     QPointer<PreviewRuntime> runtime_;
     QColor backgroundColor_{QStringLiteral("#191A1B")};
     Qt::MouseButton touchPadAuthoringPressedButton_ = Qt::NoButton;
+    QPointF lastHoverPosition_{-1.0, -1.0};
     QMetaObject::Connection runtimeUpdateConnection_;
     QMetaObject::Connection frameSwapConnection_;
 #ifdef Q_OS_MACOS
