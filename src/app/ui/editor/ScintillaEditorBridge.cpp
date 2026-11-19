@@ -266,6 +266,7 @@ void ScintillaEditorBridge::setSyncController(miacode::EditorSyncController* val
         connect(value, &miacode::EditorSyncController::navigationRequested, this, &ScintillaEditorBridge::navigate);
         connect(value, &miacode::EditorSyncController::followChanged, this, [this] { applyFollow(true); });
         connect(value, &miacode::EditorSyncController::touchPadAuthoringRequested, this, &ScintillaEditorBridge::touchAuthoring);
+        connect(value, &miacode::EditorSyncController::noteAuthoringRequested, this, &ScintillaEditorBridge::noteAuthoring);
     }
     publishContext(false);
     emit bindingsChanged();
@@ -717,6 +718,46 @@ void ScintillaEditorBridge::touchAuthoring(const QString& pad, QChar separator, 
         || revision != documentSession_->documentRevision()) return;
     QScopedValueRollback guard(programmatic_, true);
     const auto tx = controller_->touchPadAuthoring(document_.text(), anchor, position, pad, separator);
+    if (applyEditorTransaction(tx)) {
+        forceActiveFocus();
+        publishTouchAnchor(tx.transaction.touchTokenStart);
+    }
+}
+void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRequest& request, int difficulty,
+                                          qulonglong revision, int anchor, int position)
+{
+    using Action = miacode::editor::NoteAuthoringAction;
+    if (!documentSession_ || !controller_ || imeComposing_ || difficulty != documentSession_->currentDifficultyId()
+        || revision != documentSession_->documentRevision()) return;
+    const QString text = document_.text();
+    miacode::editor::NoteAuthoringRequest resolved = request;
+    int tokenPosition = position;
+    switch (request.action) {
+    case Action::HoldBegin:
+        holdAnchor_ = {document_.scope(), revision, miacode::editor::chartTokenStartAt(text, position)};
+        forceActiveFocus();
+        return;
+    case Action::HoldCancel:
+        holdAnchor_ = {};
+        return;
+    case Action::HoldFinish: {
+        const HoldAnchor start = std::exchange(holdAnchor_, HoldAnchor{});
+        // Any edit between the two clicks moves the remembered token.
+        if (start.tokenStart < 0 || start.scope != document_.scope() || start.revision != revision) return;
+        const int endToken = miacode::editor::chartTokenStartAt(text, position);
+        QString length = miacode::editor::beatDurationBetween(text, start.tokenStart, endToken);
+        if (length.isEmpty()) length = request.defaultDuration;
+        resolved.action = Action::Add;
+        resolved.item = request.item + length;
+        // A hold clicked backwards starts at the later click's token.
+        tokenPosition = qMin(start.tokenStart, endToken);
+        break;
+    }
+    default:
+        break;
+    }
+    QScopedValueRollback guard(programmatic_, true);
+    const auto tx = controller_->noteAuthoring(text, anchor, position, tokenPosition, resolved);
     if (applyEditorTransaction(tx)) {
         forceActiveFocus();
         publishTouchAnchor(tx.transaction.touchTokenStart);

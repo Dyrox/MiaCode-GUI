@@ -45,6 +45,7 @@ class ApplicationContext final : public QObject
     Q_PROPERTY(QObject* pages READ pages CONSTANT)
     Q_PROPERTY(QObject* editor READ editor CONSTANT)
     Q_PROPERTY(QObject* editorSync READ editorSync CONSTANT)
+    Q_PROPERTY(QObject* noteAuthoring READ noteAuthoring CONSTANT)
     Q_PROPERTY(QObject* shortcuts READ shortcuts CONSTANT)
     Q_PROPERTY(QObject* windowChrome READ windowChrome CONSTANT)
     Q_PROPERTY(QObject* chartDropBridge READ chartDropBridge NOTIFY chartDropBridgeChanged)
@@ -78,6 +79,7 @@ public:
     QObject* pages();
     QObject* editor();
     QObject* editorSync();
+    QObject* noteAuthoring();
     QObject* shortcuts();
     QObject* windowChrome() const;
     QObject* chartDropBridge() const;

@@ -15,6 +15,7 @@
 #include "core/analysis/MuriRenderOptions.h"
 #include "core/analysis/MuriTypes.h"
 #include "preview/quick_scene/PreviewTextureRepository.h"
+#include "core/scene/NoteAuthoringGeometry.h"
 #include "core/scene/PreviewFrameState.h"
 #include "preview/runtime/PreviewSceneAssetRepository.h"
 
@@ -195,6 +196,18 @@ public:
     bool touchPadAuthoringEnabled() const { return frameState_.touchPadAuthoringEnabled; }
     bool touchPadAuthoringPressActive() const { return !frameState_.pressedTouchPad.isEmpty(); }
     void setTouchPadAuthoringEnabled(bool enabled);
+    // Graphical charting: the active tool (NoteAuthoringTool value, 0 = off)
+    // and the gesture the preview surface reports in logical coordinates.
+    void setNoteAuthoringTool(int tool);
+    int noteAuthoringTool() const { return frameState_.noteAuthoringTool; }
+    void setNoteAuthoringPendingTarget(const QString& target);
+    void hoverNoteAuthoring(const QPointF& logicalPoint);
+    void clearNoteAuthoringHover();
+    bool beginNoteAuthoringGesture(Qt::MouseButton button, const QPointF& logicalPoint);
+    void moveNoteAuthoringGesture(const QPointF& logicalPoint);
+    bool finishNoteAuthoringGesture(const QPointF& logicalPoint);
+    void cancelNoteAuthoringGesture();
+    bool noteAuthoringGestureActive() const { return noteAuthoringButton_ != Qt::NoButton; }
     void setShowDebugInfo(bool show);
     void setSuppressDebugInfo(bool suppress);
     void setHudFontSettings(const miacode::preview::scene::PreviewHudFontSettings& settings);
@@ -272,8 +285,10 @@ signals:
     void introOverlayDataChanged();
     void introOverlayStateChanged();
     void touchPadAuthoringClicked(const QString& pad, QChar separator);
+    void noteAuthoringGestureFinished(const miacode::preview::scene::NoteAuthoringGesture& gesture);
 
 private:
+    Qt::MouseButton noteAuthoringButton_ = Qt::NoButton;
     void publishFrameStateSnapshot();
     void handlePresentedFrame();
     void refreshAssetStateFromRepository();

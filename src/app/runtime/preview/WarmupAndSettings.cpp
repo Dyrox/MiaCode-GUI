@@ -664,6 +664,7 @@ void miacode::runtime::StageMediaHost::applyEffectivePreviewOutlineVariantToCanv
             state_.touchPadAuthoringCtrlHoldActive_
             && state_.previewTouchPadAuthoringShortcutEnabled_
             && editableAuthoringContext);
+        state_.scene_->setNoteAuthoringTool(editableAuthoringContext ? session_.noteAuthoringTool() : 0);
     }
 }
 

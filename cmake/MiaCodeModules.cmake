@@ -133,6 +133,10 @@ miacode_add_module(miacode_editor_core
     SOURCES
         src/editor/BookmarkCommentSyntax.cpp
         src/editor/BookmarkCommentSyntax.h
+        src/editor/ChartTokenScan.cpp
+        src/editor/ChartTokenScan.h
+        src/editor/NoteAuthoringEdit.cpp
+        src/editor/NoteAuthoringEdit.h
         src/editor/SimaiCompletionCatalog.cpp
         src/editor/SimaiCompletionCatalog.h
         src/editor/SimaiTextEditPolicy.cpp
@@ -146,6 +150,8 @@ endif()
 # ---- scene: frame/layer math and preview configuration --------------------
 miacode_add_module(miacode_scene
     SOURCES
+        src/core/scene/NoteAuthoringGeometry.cpp
+        src/core/scene/NoteAuthoringGeometry.h
         src/core/scene/PreviewActiveMarkerView.h
         src/core/scene/PreviewAnimatedSpriteHelpers.cpp
         src/core/scene/PreviewAnimatedSpriteHelpers.h

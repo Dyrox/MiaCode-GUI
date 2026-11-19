@@ -259,6 +259,8 @@ public:
     miacode::EditorSyncController& editorSyncController();
     const miacode::EditorSyncController& editorSyncController() const;
     bool editorAuthoringContextActive() const;
+    // Graphical charting tool for the preview; 0 while charting is off.
+    int noteAuthoringTool() const;
     void refreshEditorAuthoringContext();
     void setTouchPadAuthoringCtrlHold(bool active);
     bool applyTouchPadAuthoringPreviewAnchor(int difficultyId, int line, int column);

@@ -67,14 +67,32 @@ bool EditorSyncController::requestTouchPadAuthoring(
     if (!editorContextActive() || pad.trimmed().isEmpty()) {
         return false;
     }
-    pendingTouchPadRequests_.enqueue({
-        pad,
-        separator,
-        contextDifficultyId_,
-        contextRevision_,
-        contextAnchor_,
-        contextPosition_});
-    scheduleTouchPadDelivery();
+    AuthoringRequest request;
+    request.pad = pad;
+    request.separator = separator;
+    request.difficultyId = contextDifficultyId_;
+    request.revision = contextRevision_;
+    request.anchor = contextAnchor_;
+    request.position = contextPosition_;
+    pendingAuthoringRequests_.enqueue(request);
+    scheduleAuthoringDelivery();
+    return true;
+}
+
+bool EditorSyncController::requestNoteAuthoring(const miacode::editor::NoteAuthoringRequest& noteRequest)
+{
+    if (!editorContextActive() || noteRequest.target.trimmed().isEmpty()) {
+        return false;
+    }
+    AuthoringRequest request;
+    request.note = true;
+    request.noteRequest = noteRequest;
+    request.difficultyId = contextDifficultyId_;
+    request.revision = contextRevision_;
+    request.anchor = contextAnchor_;
+    request.position = contextPosition_;
+    pendingAuthoringRequests_.enqueue(request);
+    scheduleAuthoringDelivery();
     return true;
 }
 
@@ -116,7 +134,7 @@ void EditorSyncController::setEditorReadiness(
             scheduleNavigationFinished(pendingNavigation_.sequence, false);
         }
         navigationPending_ = false;
-        pendingTouchPadRequests_.clear();
+        pendingAuthoringRequests_.clear();
         caretPending_ = false;
         pointerInteractionPending_ = false;
         touchPadPreviewAnchorPending_ = false;
@@ -440,22 +458,29 @@ void EditorSyncController::scheduleNavigationFinished(quint64 sequence, bool app
     }, Qt::QueuedConnection);
 }
 
-void EditorSyncController::scheduleTouchPadDelivery()
+void EditorSyncController::scheduleAuthoringDelivery()
 {
-    if (touchPadDeliveryQueued_ || pendingTouchPadRequests_.isEmpty()) {
+    if (authoringDeliveryQueued_ || pendingAuthoringRequests_.isEmpty()) {
         return;
     }
-    touchPadDeliveryQueued_ = true;
+    authoringDeliveryQueued_ = true;
     QMetaObject::invokeMethod(this, [this] {
-        touchPadDeliveryQueued_ = false;
-        const TouchPadRequest request = pendingTouchPadRequests_.dequeue();
+        authoringDeliveryQueued_ = false;
+        const AuthoringRequest request = pendingAuthoringRequests_.dequeue();
         if (readinessAccepts(request.difficultyId, request.revision) && !imeComposing_) {
-            emit touchPadAuthoringRequested(
-                request.pad, request.separator,
-                request.difficultyId, request.revision,
-                request.anchor, request.position);
+            if (request.note) {
+                emit noteAuthoringRequested(
+                    request.noteRequest,
+                    request.difficultyId, request.revision,
+                    request.anchor, request.position);
+            } else {
+                emit touchPadAuthoringRequested(
+                    request.pad, request.separator,
+                    request.difficultyId, request.revision,
+                    request.anchor, request.position);
+            }
         }
-        scheduleTouchPadDelivery();
+        scheduleAuthoringDelivery();
     }, Qt::QueuedConnection);
 }
 

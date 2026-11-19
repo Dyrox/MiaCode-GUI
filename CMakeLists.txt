@@ -411,6 +411,8 @@ add_executable(MiaCode WIN32 MACOSX_BUNDLE
     src/app/services/UiRequestService.h
     src/app/services/JobProgressService.cpp
     src/app/services/JobProgressService.h
+    src/app/services/NoteAuthoringController.cpp
+    src/app/services/NoteAuthoringController.h
     src/app/ui/media/MediaToolsModel.cpp
     src/app/ui/media/MediaToolsModel.h
     src/app/ui/preview/AudioSettingsModel.cpp
@@ -719,6 +721,7 @@ set(MIACODE_UI_QML_FILES
     src/app/ui/timeline/TimelineZoomControl.qml
     src/app/ui/timeline/TimelineZoomMenu.qml
     src/app/ui/timeline/TimelineSettingsMenu.qml
+    src/app/ui/preview/ChartingToolbar.qml
     src/app/ui/preview/PreviewPane.qml
     src/app/ui/preview/PreviewRenderModeMenu.qml
     src/app/ui/preview/PreviewRateMenu.qml

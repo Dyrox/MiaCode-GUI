@@ -176,6 +176,8 @@ private:
     void revealPosition(int utf16, bool center);
     void navigate(qulonglong sequence, int difficulty, qulonglong revision, int start, int end, bool focus, bool reveal);
     void touchAuthoring(const QString& pad, QChar separator, int difficulty, qulonglong revision, int anchor, int position);
+    void noteAuthoring(const miacode::editor::NoteAuthoringRequest& request, int difficulty, qulonglong revision,
+                       int anchor, int position);
     void beginUserInteraction();
     void publishTouchUndoAnchor();
     ScintillaDocumentAdapter document_;
@@ -243,5 +245,12 @@ private:
     QHash<int, TouchUndoAnchor> touchUndoAnchors_;
     int nextTouchToken_ = 1;
     int pendingTouchAnchor_ = -1;
+    // A two-click hold's first token; only valid while the text is unchanged.
+    struct HoldAnchor {
+        QString scope;
+        qulonglong revision = 0;
+        int tokenStart = -1;
+    };
+    HoldAnchor holdAnchor_;
 };
 }

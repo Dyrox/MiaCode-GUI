@@ -220,6 +220,16 @@ Session::Session(miacode::ApplicationServices& services, QObject* parent)
             editorSyncController_->requestTouchPadAuthoring(pad, separator);
         }
     });
+    miacode::NoteAuthoringController& noteAuthoring = applicationServices_.noteAuthoring();
+    connect(scene_, &PreviewRuntime::noteAuthoringGestureFinished,
+            &noteAuthoring, &miacode::NoteAuthoringController::handleGesture);
+    connect(&noteAuthoring, &miacode::NoteAuthoringController::toolChanged,
+            this, &Session::refreshEditorAuthoringContext);
+    connect(&noteAuthoring, &miacode::NoteAuthoringController::pendingTargetChanged, this, [this] {
+        if (scene_ != nullptr) {
+            scene_->setNoteAuthoringPendingTarget(applicationServices_.noteAuthoring().pendingTarget());
+        }
+    });
     logStartupStage("preview_canvas_created");
     applyEffectivePreviewOutlineVariantToCanvas();
     applyPreviewSkinDirectoryToSurfaces();

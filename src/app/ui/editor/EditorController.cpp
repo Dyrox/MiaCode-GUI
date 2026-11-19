@@ -290,4 +290,31 @@ miacode::editor::SimaiTextEditResult EditorController::touchPadAuthoring(
     return result;
 }
 
+miacode::editor::SimaiTextEditResult EditorController::noteAuthoring(
+    const QString& text, int anchor, int position, int tokenPosition,
+    const miacode::editor::NoteAuthoringRequest& request) const
+{
+    auto result = untouched(text, anchor, position);
+    const auto plan = miacode::editor::planNoteAuthoringEdit(
+        text, tokenPosition, request.action, request.target, request.item);
+    if (!plan.valid) return result;
+    const int start = qBound(0, plan.replaceStart, int(text.size()));
+    const int end = qBound(start, start + plan.removalLength, int(text.size()));
+    const int insertedEnd = start + plan.insertionText.size();
+    const int delta = plan.insertionText.size() - (end - start);
+    const auto shifted = [&](int caret) {
+        if (caret >= end) return caret + delta;
+        return caret > start ? insertedEnd : caret;
+    };
+    result.consumed = true;
+    auto& tx = result.transaction;
+    tx.hasEdit = true;
+    tx.replacementStart = start;
+    tx.replacementEnd = end;
+    tx.replacementText = plan.insertionText;
+    tx.anchor = tx.position = shifted(position);
+    tx.touchTokenStart = plan.tokenStart;
+    return result;
+}
+
 } // namespace miacode::ui

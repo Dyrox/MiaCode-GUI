@@ -3663,6 +3663,66 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Preview rendering mode</source>
         <translation>Preview rendering mode</translation>
     </message>
+    <message id="qml.charting.off">
+        <source>Off</source>
+        <translation>Off</translation>
+    </message>
+    <message id="qml.charting.tap">
+        <source>Tap</source>
+        <translation>Tap</translation>
+    </message>
+    <message id="qml.charting.hold">
+        <source>Hold</source>
+        <translation>Hold</translation>
+    </message>
+    <message id="qml.charting.slide">
+        <source>Slide</source>
+        <translation>Slide</translation>
+    </message>
+    <message id="qml.charting.touch">
+        <source>Touch</source>
+        <translation>Touch</translation>
+    </message>
+    <message id="qml.charting.touch_hold">
+        <source>Touch Hold</source>
+        <translation>Touch Hold</translation>
+    </message>
+    <message id="qml.charting.break">
+        <source>Break</source>
+        <translation>Break</translation>
+    </message>
+    <message id="qml.charting.ex">
+        <source>EX</source>
+        <translation>EX</translation>
+    </message>
+    <message id="qml.charting.star">
+        <source>Star</source>
+        <translation>Star</translation>
+    </message>
+    <message id="qml.charting.wifi">
+        <source>Wifi</source>
+        <translation>Wifi</translation>
+    </message>
+    <message id="qml.charting.firework">
+        <source>Firework</source>
+        <translation>Firework</translation>
+    </message>
+    <message id="qml.charting.hold_length">
+        <source>Hold length when both clicks are on the same beat</source>
+        <translation>Hold length when both clicks are on the same beat</translation>
+    </message>
+    <message id="qml.charting.slide_length">
+        <source>Slide length</source>
+        <translation>Slide length</translation>
+    </message>
+    <message id="qml.charting.hold_pending">
+        <source>Hold from %1: move the cursor and click again</source>
+        <translation>Hold from %1: move the cursor and click again</translation>
+    </message>
+    <message id="qml.charting.hint">
+        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button.</source>
+        <translation>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button.</translation>
+    </message>
     <message id="menu.preview_rendering_mode">
         <source>Rendering Mode</source>
         <translation>Rendering Mode</translation>

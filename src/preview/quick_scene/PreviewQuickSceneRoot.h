@@ -77,7 +77,9 @@ protected:
 
 private:
     QString instanceTag() const;
+    bool logicalPointAtItemPoint(const QPointF& itemPoint, QPointF* logicalPoint) const;
     QString touchPadAtItemPoint(const QPointF& itemPoint) const;
+    bool noteAuthoringActive() const;
     void updateHoveredTouchPadAtItemPoint(const QPointF& itemPoint);
     void clearPendingTextureStatsForPresentation();
     void enqueueTextureStatsForPresentation(const PreviewTextureStats& stats);

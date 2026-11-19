@@ -74,4 +74,10 @@ inline TouchPadAuthoringVisualStyle touchPadAuthoringVisualStyle(bool pressed)
         : TouchPadAuthoringVisualStyle{QColor(255, 255, 255, 58), QColor(255, 255, 255, 96)};
 }
 
+// A hold's first click, waiting for the click that sets its length.
+inline TouchPadAuthoringVisualStyle noteAuthoringPendingVisualStyle()
+{
+    return TouchPadAuthoringVisualStyle{QColor(255, 214, 120, 96), QColor(255, 200, 90, 200)};
+}
+
 } // namespace miacode::preview::scene

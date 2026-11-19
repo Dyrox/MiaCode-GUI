@@ -96,6 +96,7 @@ QObject* ApplicationContext::timeline() { return &timeline_; }
 QObject* ApplicationContext::pages() { return &pages_; }
 QObject* ApplicationContext::editor() { return &editor_; }
 QObject* ApplicationContext::editorSync() { return &services_.editorSync(); }
+QObject* ApplicationContext::noteAuthoring() { return &services_.noteAuthoring(); }
 QObject* ApplicationContext::shortcuts() { return &shortcuts_; }
 QObject* ApplicationContext::windowChrome() const { return windowChrome_; }
 QObject* ApplicationContext::chartDropBridge() const { return chartDropBridge_; }

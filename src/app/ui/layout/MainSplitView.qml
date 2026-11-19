@@ -22,6 +22,7 @@ Item {
     required property var pages
     required property var editorController
     required property var editorSync
+    property var noteAuthoring: null
     required property var latency
     required property var net
     required property var netUpload
@@ -257,6 +258,7 @@ Item {
         previewSession: root.previewSession
         preferences: root.preferences
         exportSession: root.pages.exportSession
+        noteAuthoring: root.noteAuthoring
         exportPageActive: root.exportVideoActive
         latencyActive: root.viewState.latencyEditorActive
                        && root.pages.activePageId === "latency"

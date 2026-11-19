@@ -18,6 +18,7 @@ Item {
     readonly property var pages: applicationContext.pages
     readonly property var editorController: applicationContext.editor
     readonly property var editorSync: applicationContext.editorSync
+    readonly property var noteAuthoring: applicationContext.noteAuthoring
     readonly property var platform: applicationContext.platform
     readonly property var uiRequests: applicationContext.uiRequests
     readonly property var jobProgress: applicationContext.jobProgress
@@ -422,6 +423,7 @@ Item {
                 pages: root.pages
                 editorController: root.editorController
                 editorSync: root.editorSync
+                noteAuthoring: root.noteAuthoring
                 latency: root.latency
                 net: root.applicationContext.net
                 netUpload: root.applicationContext.netUpload

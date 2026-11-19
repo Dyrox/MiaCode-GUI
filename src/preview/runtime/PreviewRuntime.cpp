@@ -881,6 +881,123 @@ void PreviewRuntime::setTouchPadAuthoringEnabled(bool enabled)
     update();
 }
 
+void PreviewRuntime::setNoteAuthoringTool(int tool)
+{
+    const int normalized = int(miacode::preview::scene::noteAuthoringToolFromInt(tool));
+    if (frameState_.noteAuthoringTool == normalized) {
+        return;
+    }
+    cancelNoteAuthoringGesture();
+    frameState_.noteAuthoringTool = normalized;
+    frameState_.hoveredAuthoringTarget.clear();
+    frameState_.pressedAuthoringTarget.clear();
+    if (normalized == 0) {
+        frameState_.pendingAuthoringTarget.clear();
+    }
+    update();
+}
+
+void PreviewRuntime::setNoteAuthoringPendingTarget(const QString& target)
+{
+    if (frameState_.pendingAuthoringTarget == target) {
+        return;
+    }
+    frameState_.pendingAuthoringTarget = target;
+    update();
+}
+
+void PreviewRuntime::hoverNoteAuthoring(const QPointF& logicalPoint)
+{
+    const QString target = miacode::preview::scene::noteAuthoringTargetAtLogicalPoint(
+        miacode::preview::scene::noteAuthoringToolFromInt(frameState_.noteAuthoringTool), logicalPoint);
+    if (frameState_.hoveredAuthoringTarget == target) {
+        return;
+    }
+    frameState_.hoveredAuthoringTarget = target;
+    update();
+}
+
+void PreviewRuntime::clearNoteAuthoringHover()
+{
+    if (frameState_.hoveredAuthoringTarget.isEmpty()) {
+        return;
+    }
+    frameState_.hoveredAuthoringTarget.clear();
+    update();
+}
+
+bool PreviewRuntime::beginNoteAuthoringGesture(Qt::MouseButton button, const QPointF& logicalPoint)
+{
+    const auto tool = miacode::preview::scene::noteAuthoringToolFromInt(frameState_.noteAuthoringTool);
+    if (tool == miacode::preview::scene::NoteAuthoringTool::None
+        || (button != Qt::LeftButton && button != Qt::RightButton)) {
+        return false;
+    }
+    const QString target = miacode::preview::scene::noteAuthoringTargetAtLogicalPoint(tool, logicalPoint);
+    // Right clicks also cancel a pending hold, so they are taken anywhere.
+    if (target.isEmpty() && button == Qt::LeftButton) {
+        return false;
+    }
+    noteAuthoringButton_ = button;
+    frameState_.hoveredAuthoringTarget = target;
+    frameState_.pressedAuthoringTarget = target;
+    frameState_.authoringPath.clear();
+    if (tool == miacode::preview::scene::NoteAuthoringTool::Slide && button == Qt::LeftButton) {
+        frameState_.authoringPath.append(logicalPoint);
+    }
+    update();
+    return true;
+}
+
+void PreviewRuntime::moveNoteAuthoringGesture(const QPointF& logicalPoint)
+{
+    hoverNoteAuthoring(logicalPoint);
+    if (noteAuthoringButton_ != Qt::LeftButton || frameState_.authoringPath.isEmpty()) {
+        return;
+    }
+    // Thin the drawn path; the shape match resamples it anyway.
+    const QPointF delta = logicalPoint - frameState_.authoringPath.constLast();
+    if (QPointF::dotProduct(delta, delta) < 9.0) {
+        return;
+    }
+    frameState_.authoringPath.append(logicalPoint);
+    update();
+}
+
+bool PreviewRuntime::finishNoteAuthoringGesture(const QPointF& logicalPoint)
+{
+    if (noteAuthoringButton_ == Qt::NoButton) {
+        return false;
+    }
+    miacode::preview::scene::NoteAuthoringGesture gesture;
+    gesture.tool = miacode::preview::scene::noteAuthoringToolFromInt(frameState_.noteAuthoringTool);
+    gesture.secondary = noteAuthoringButton_ == Qt::RightButton;
+    gesture.startTarget = frameState_.pressedAuthoringTarget;
+    gesture.endTarget = miacode::preview::scene::noteAuthoringTargetAtLogicalPoint(gesture.tool, logicalPoint);
+    gesture.path = frameState_.authoringPath;
+    if (!gesture.path.isEmpty()) {
+        gesture.path.append(logicalPoint);
+    }
+    noteAuthoringButton_ = Qt::NoButton;
+    frameState_.pressedAuthoringTarget.clear();
+    frameState_.authoringPath.clear();
+    frameState_.hoveredAuthoringTarget = gesture.endTarget;
+    update();
+    emit noteAuthoringGestureFinished(gesture);
+    return true;
+}
+
+void PreviewRuntime::cancelNoteAuthoringGesture()
+{
+    if (noteAuthoringButton_ == Qt::NoButton) {
+        return;
+    }
+    noteAuthoringButton_ = Qt::NoButton;
+    frameState_.pressedAuthoringTarget.clear();
+    frameState_.authoringPath.clear();
+    update();
+}
+
 void PreviewRuntime::setShowDebugInfo(bool show)
 {
     requestedShowDebugInfo_ = show;

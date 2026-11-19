@@ -1,5 +1,7 @@
 #pragma once
 
+#include "editor/NoteAuthoringEdit.h"
+
 #include <QObject>
 #include <QQueue>
 #include <QString>
@@ -59,6 +61,8 @@ public:
     Q_INVOKABLE qulonglong requestNavigation(int difficultyId, qulonglong revision,
                                              int start, int end, bool focus, bool reveal);
     bool requestTouchPadAuthoring(const QString& pad, QChar separator);
+    // Graphical charting, stamped with the editor context like touch pads.
+    bool requestNoteAuthoring(const miacode::editor::NoteAuthoringRequest& request);
     bool editorContextActive() const;
     EditorSelectionState editorSelection() const;
 
@@ -85,6 +89,9 @@ signals:
     void touchPadAuthoringRequested(const QString& pad, QChar separator,
                                     int difficultyId, qulonglong revision,
                                     int anchor, int position);
+    void noteAuthoringRequested(const miacode::editor::NoteAuthoringRequest& request,
+                                int difficultyId, qulonglong revision,
+                                int anchor, int position);
     void caretLocationPublished(int difficultyId, qulonglong revision, int line, int column);
     void pointerInteractionStarted(int difficultyId);
     void touchPadControlHoldChanged(bool active);
@@ -118,7 +125,10 @@ private:
         int selectionEnd = 0;
     };
 
-    struct TouchPadRequest {
+    // Touch-pad and note authoring share one queue so clicks apply in order.
+    struct AuthoringRequest {
+        bool note = false;
+        miacode::editor::NoteAuthoringRequest noteRequest;
         QString pad;
         QChar separator = QLatin1Char('/');
         int difficultyId = -1;
@@ -138,7 +148,7 @@ private:
     void scheduleSelectionRangeExportDelivery();
     void scheduleNavigationDelivery();
     void scheduleNavigationFinished(quint64 sequence, bool applied);
-    void scheduleTouchPadDelivery();
+    void scheduleAuthoringDelivery();
 
     EditorFollowState follow_;
     bool followDeliveryQueued_ = false;
@@ -188,8 +198,8 @@ private:
     bool navigationDeliveryQueued_ = false;
     quint64 deliveredNavigationSequence_ = 0;
 
-    QQueue<TouchPadRequest> pendingTouchPadRequests_;
-    bool touchPadDeliveryQueued_ = false;
+    QQueue<AuthoringRequest> pendingAuthoringRequests_;
+    bool authoringDeliveryQueued_ = false;
 };
 
 } // namespace miacode

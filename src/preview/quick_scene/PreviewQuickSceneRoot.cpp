@@ -482,29 +482,47 @@ QObject* PreviewQuickSceneRoot::runtimeObject() const
     return runtime_;
 }
 
-QString PreviewQuickSceneRoot::touchPadAtItemPoint(const QPointF& itemPoint) const
+bool PreviewQuickSceneRoot::logicalPointAtItemPoint(const QPointF& itemPoint, QPointF* logicalPoint) const
 {
-    if (runtime_ == nullptr) {
-        return QString();
+    if (runtime_ == nullptr || logicalPoint == nullptr) {
+        return false;
     }
     const auto stateSnapshot = runtime_->frameStateSnapshot();
-    if (stateSnapshot == nullptr || !stateSnapshot->touchPadAuthoringEnabled) {
-        return QString();
+    if (stateSnapshot == nullptr) {
+        return false;
     }
     const QRectF playfieldRect = miacode::preview::scene::playfieldRectForStage(
         miacode::preview::scene::stageRectForSize(miacode::pixel_geometry::coveringSize(boundingRect().size())),
         stateSnapshot->render.layoutSquareScale
     );
     if (!playfieldRect.contains(itemPoint) || playfieldRect.width() <= 0.0) {
-        return QString();
+        return false;
     }
 
     const qreal logicalScale = miacode::preview::scene::kLogicalCanvasSize / playfieldRect.width();
-    const QPointF logicalPoint(
+    *logicalPoint = QPointF(
         (itemPoint.x() - playfieldRect.left()) * logicalScale,
         (itemPoint.y() - playfieldRect.top()) * logicalScale
     );
+    return true;
+}
+
+QString PreviewQuickSceneRoot::touchPadAtItemPoint(const QPointF& itemPoint) const
+{
+    if (runtime_ == nullptr || !runtime_->touchPadAuthoringEnabled()) {
+        return QString();
+    }
+    QPointF logicalPoint;
+    if (!logicalPointAtItemPoint(itemPoint, &logicalPoint)) {
+        return QString();
+    }
     return miacode::preview::scene::touchPadTokenAtLogicalPoint(logicalPoint);
+}
+
+bool PreviewQuickSceneRoot::noteAuthoringActive() const
+{
+    // Ctrl touch-pad authoring keeps priority while it is armed.
+    return runtime_ != nullptr && runtime_->noteAuthoringTool() != 0 && !runtime_->touchPadAuthoringEnabled();
 }
 
 void PreviewQuickSceneRoot::updateHoveredTouchPadAtItemPoint(const QPointF& itemPoint)
@@ -513,6 +531,16 @@ void PreviewQuickSceneRoot::updateHoveredTouchPadAtItemPoint(const QPointF& item
         return;
     }
     runtime_->setHoveredTouchPad(touchPadAtItemPoint(itemPoint));
+    if (!noteAuthoringActive()) {
+        runtime_->clearNoteAuthoringHover();
+        return;
+    }
+    QPointF logicalPoint;
+    if (logicalPointAtItemPoint(itemPoint, &logicalPoint)) {
+        runtime_->hoverNoteAuthoring(logicalPoint);
+    } else {
+        runtime_->clearNoteAuthoringHover();
+    }
 }
 
 void PreviewQuickSceneRoot::hoverMoveEvent(QHoverEvent* event)
@@ -527,15 +555,29 @@ void PreviewQuickSceneRoot::hoverLeaveEvent(QHoverEvent* event)
 {
     if (runtime_ != nullptr) {
         runtime_->setHoveredTouchPad(QString());
+        runtime_->clearNoteAuthoringHover();
     }
     QQuickItem::hoverLeaveEvent(event);
 }
 
 void PreviewQuickSceneRoot::mousePressEvent(QMouseEvent* event)
 {
-    if (event == nullptr
-        || !miacode::preview::scene::touchPadAuthoringMouseButtonSupported(event->button())
-        || runtime_ == nullptr) {
+    if (event == nullptr || runtime_ == nullptr) {
+        QQuickItem::mousePressEvent(event);
+        return;
+    }
+    if (noteAuthoringActive()) {
+        QPointF logicalPoint;
+        const bool inside = logicalPointAtItemPoint(event->position(), &logicalPoint);
+        if ((inside || event->button() == Qt::RightButton)
+            && runtime_->beginNoteAuthoringGesture(event->button(), logicalPoint)) {
+            event->accept();
+            return;
+        }
+        QQuickItem::mousePressEvent(event);
+        return;
+    }
+    if (!miacode::preview::scene::touchPadAuthoringMouseButtonSupported(event->button())) {
         QQuickItem::mousePressEvent(event);
         return;
     }
@@ -555,6 +597,16 @@ void PreviewQuickSceneRoot::mousePressEvent(QMouseEvent* event)
 
 void PreviewQuickSceneRoot::mouseMoveEvent(QMouseEvent* event)
 {
+    if (event != nullptr && runtime_ != nullptr && runtime_->noteAuthoringGestureActive()) {
+        QPointF logicalPoint;
+        if (logicalPointAtItemPoint(event->position(), &logicalPoint)) {
+            runtime_->moveNoteAuthoringGesture(logicalPoint);
+        } else {
+            runtime_->clearNoteAuthoringHover();
+        }
+        event->accept();
+        return;
+    }
     if (event != nullptr && runtime_ != nullptr && runtime_->touchPadAuthoringEnabled()) {
         updateHoveredTouchPadAtItemPoint(event->position());
         event->accept();
@@ -565,6 +617,13 @@ void PreviewQuickSceneRoot::mouseMoveEvent(QMouseEvent* event)
 
 void PreviewQuickSceneRoot::mouseReleaseEvent(QMouseEvent* event)
 {
+    if (event != nullptr && runtime_ != nullptr && runtime_->noteAuthoringGestureActive()) {
+        QPointF logicalPoint(-1.0, -1.0);
+        logicalPointAtItemPoint(event->position(), &logicalPoint);
+        runtime_->finishNoteAuthoringGesture(logicalPoint);
+        event->accept();
+        return;
+    }
     if (event != nullptr
         && miacode::preview::scene::touchPadAuthoringMouseButtonSupported(event->button())
         && event->button() == touchPadAuthoringPressedButton_
@@ -586,6 +645,7 @@ void PreviewQuickSceneRoot::mouseUngrabEvent()
 {
     if (runtime_ != nullptr) {
         runtime_->cancelTouchPadAuthoringPress();
+        runtime_->cancelNoteAuthoringGesture();
     }
     touchPadAuthoringPressedButton_ = Qt::NoButton;
     QQuickItem::mouseUngrabEvent();

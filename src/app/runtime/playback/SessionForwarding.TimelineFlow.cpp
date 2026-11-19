@@ -269,6 +269,11 @@ bool Session::editorAuthoringContextActive() const
     return editorSyncController_ != nullptr && editorSyncController_->editorContextActive();
 }
 
+int Session::noteAuthoringTool() const
+{
+    return applicationServices_.noteAuthoring().tool();
+}
+
 void Session::navigateTimelineToSecond(double second, bool focusEditor)
 {
     playback_->navigateTimelineToSecond(second, focusEditor);

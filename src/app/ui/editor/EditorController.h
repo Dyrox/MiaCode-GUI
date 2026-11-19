@@ -1,5 +1,6 @@
 #pragma once
 
+#include "editor/NoteAuthoringEdit.h"
 #include "editor/SimaiTextEditPolicy.h"
 
 #include <QObject>
@@ -52,6 +53,11 @@ public:
     miacode::editor::SimaiTextEditResult deleteBookmark(const QString& lineText, int offset) const;
     miacode::editor::SimaiTextEditResult touchPadAuthoring(const QString& text, int anchor,
                                                         int position, const QString& pad, QChar separator) const;
+    // Writes a resolved Toggle/Add/Remove request into the token holding
+    // `tokenPosition`; the caret keeps its place relative to the text.
+    miacode::editor::SimaiTextEditResult noteAuthoring(const QString& text, int anchor, int position,
+                                                     int tokenPosition,
+                                                     const miacode::editor::NoteAuthoringRequest& request) const;
     void updateCompletion(const QString& text, int position);
     Q_INVOKABLE void moveCompletionSelection(int delta);
     Q_INVOKABLE void selectCompletionIndex(int index);

@@ -5,6 +5,7 @@
 #include "app/services/ChartWorkspaceFileService.h"
 #include "app/services/EditorSyncController.h"
 #include "app/services/JobProgressService.h"
+#include "app/services/NoteAuthoringController.h"
 #include "app/services/PreviewAppearanceState.h"
 #include "app/services/ShellNotifications.h"
 #include "app/services/UiRequestService.h"
@@ -78,6 +79,8 @@ public:
 
     EditorSyncController& editorSync() { return editorSync_; }
     const EditorSyncController& editorSync() const { return editorSync_; }
+
+    NoteAuthoringController& noteAuthoring() { return noteAuthoring_; }
 
     UiRequestService& uiRequests() { return uiRequests_; }
     const UiRequestService& uiRequests() const { return uiRequests_; }
@@ -199,6 +202,7 @@ private:
     SimaiValidationLocale validationLocale_;
     AnalysisService analysis_;
     EditorSyncController editorSync_;
+    NoteAuthoringController noteAuthoring_;
     UiRequestService uiRequests_;
     JobProgressService jobProgress_;
     PreviewAppearanceState previewAppearance_;

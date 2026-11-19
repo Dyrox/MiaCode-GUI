@@ -265,6 +265,14 @@ struct PreviewFrameState {
     QString hoveredTouchPad;
     QString pressedTouchPad;
     bool touchPadAuthoringEnabled = false;
+    // Graphical charting (NoteAuthoringTool value; 0 = off). Targets are lanes
+    // "1".."8" or touch pads; the path is the slide being drawn, in logical
+    // canvas coordinates, and the pending target is a hold's first click.
+    int noteAuthoringTool = 0;
+    QString hoveredAuthoringTarget;
+    QString pressedAuthoringTarget;
+    QString pendingAuthoringTarget;
+    QVector<QPointF> authoringPath;
     double playheadSeconds = 0.0;
     // Optional HUD-only override. When finite, the HUD timestamp/stats use
     // this value instead of `playheadSeconds`; the scene graph and note

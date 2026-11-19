@@ -9,6 +9,8 @@ Rectangle {
     required property var previewSession
     required property var preferences
     required property var exportSession
+    // Graphical charting tool state; the toolbar hides without it.
+    property var noteAuthoring: null
     property bool documentAvailable: true
     property bool latencyActive: false
     // See PreviewTransport: the canvas menu hides on the export page.
@@ -114,11 +116,21 @@ Rectangle {
         previewSession: root.previewSession
     }
 
+    ChartingToolbar {
+        id: chartingToolbar
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: heading.bottom
+        noteAuthoring: root.noteAuthoring
+        visible: root.noteAuthoring !== null && !root.exportPageActive && root.documentAvailable
+        height: visible ? implicitHeight : 0
+    }
+
     Item {
         id: stageArea
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: heading.bottom
+        anchors.top: chartingToolbar.bottom
         anchors.bottom: transport.top
         clip: true
 
