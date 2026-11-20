@@ -13,7 +13,17 @@ Rectangle {
     // The lane editor this panel drives, for its zoom.
     property Item laneEditor: null
     readonly property int tool: root.noteAuthoring ? root.noteAuthoring.tool : 0
-    readonly property string modifierKey: Qt.platform.os === "osx" ? "Cmd" : "Ctrl"
+    // A shortcut as the platform writes it: "⇧⌘F" on macOS, "Ctrl+Shift+F"
+    // elsewhere. `mods` uses "Cmd" for the command key (Ctrl off macOS).
+    function keys(mods, key) {
+        if (Qt.platform.os === "osx") {
+            const symbols = { "Ctrl": "⌃", "Option": "⌥", "Shift": "⇧", "Cmd": "⌘" }
+            return ["Ctrl", "Option", "Shift", "Cmd"].filter(m => mods.indexOf(m) >= 0)
+                       .map(m => symbols[m]).join("") + key
+        }
+        const names = { "Cmd": "Ctrl", "Option": "Alt" }
+        return mods.map(m => names[m] || m).concat([key]).join("+")
+    }
     readonly property real labelWidth: 52
     // Zoom is shown relative to 75 px per second.
     readonly property real zoomBase: 75
@@ -346,19 +356,19 @@ Rectangle {
                         rowSpacing: 4
                         OperationButton {
                             label: qsTrId("qml.charting.copy")
-                            shortcut: root.modifierKey + "+C"
+                            shortcut: root.keys(["Cmd"], "C")
                             enabled: root.noteAuthoring.selectionCount > 0
                             onClicked: root.noteAuthoring.copySelection()
                         }
                         OperationButton {
                             label: qsTrId("qml.charting.cut")
-                            shortcut: root.modifierKey + "+X"
+                            shortcut: root.keys(["Cmd"], "X")
                             enabled: root.noteAuthoring.selectionCount > 0
                             onClicked: root.noteAuthoring.cutSelection()
                         }
                         OperationButton {
                             label: qsTrId("qml.charting.paste")
-                            shortcut: root.modifierKey + "+V"
+                            shortcut: root.keys(["Cmd"], "V")
                             enabled: root.noteAuthoring.clipCount > 0
                             // In the lane editor the copy follows the pointer
                             // until a click puts it down.
@@ -371,7 +381,7 @@ Rectangle {
                         }
                         OperationButton {
                             label: qsTrId("qml.charting.delete")
-                            shortcut: "Del"
+                            shortcut: Qt.platform.os === "osx" ? "⌫" : "Del"
                             enabled: root.noteAuthoring.selectionCount > 0
                             onClicked: root.noteAuthoring.deleteSelection()
                         }
@@ -387,25 +397,25 @@ Rectangle {
                         // ChartTransformOp values.
                         OperationButton {
                             label: qsTrId("action.transform.mirror_lr")
-                            shortcut: root.modifierKey + "+F"
+                            shortcut: root.keys(["Cmd"], "F")
                             enabled: root.noteAuthoring.selectionCount > 0
                             onClicked: root.noteAuthoring.transformSelection(0)
                         }
                         OperationButton {
                             label: qsTrId("action.transform.mirror_ud")
-                            shortcut: root.modifierKey + "+Shift+F"
+                            shortcut: root.keys(["Cmd", "Shift"], "F")
                             enabled: root.noteAuthoring.selectionCount > 0
                             onClicked: root.noteAuthoring.transformSelection(1)
                         }
                         OperationButton {
                             label: qsTrId("action.transform.rotate_cw_45")
-                            shortcut: root.modifierKey + "+R"
+                            shortcut: root.keys(["Cmd"], "R")
                             enabled: root.noteAuthoring.selectionCount > 0
                             onClicked: root.noteAuthoring.transformSelection(4)
                         }
                         OperationButton {
                             label: qsTrId("action.transform.rotate_ccw_45")
-                            shortcut: root.modifierKey + "+Shift+R"
+                            shortcut: root.keys(["Cmd", "Shift"], "R")
                             enabled: root.noteAuthoring.selectionCount > 0
                             onClicked: root.noteAuthoring.transformSelection(3)
                         }
@@ -425,10 +435,10 @@ Rectangle {
                         rowSpacing: 4
                         Repeater {
                             model: [
-                                { label: qsTrId("qml.charting.break"), operation: "b" },
-                                { label: qsTrId("qml.charting.ex"), operation: "x" },
+                                { label: qsTrId("qml.charting.break"), operation: "b", key: "B" },
+                                { label: qsTrId("qml.charting.ex"), operation: "x", key: "X" },
                                 { label: qsTrId("qml.charting.firework"), operation: "f" },
-                                { label: qsTrId("qml.charting.slide_break"), operation: "B" },
+                                { label: qsTrId("qml.charting.slide_break"), operation: "B", key: "S" },
                                 { label: qsTrId("qml.charting.hold_to_taps"), operation: "taps" },
                                 { label: qsTrId("qml.charting.swap_slide"), operation: "swap" },
                                 { label: qsTrId("qml.charting.scale_double"), operation: "scale:2/1" },
@@ -436,8 +446,10 @@ Rectangle {
                             ]
                             delegate: OperationButton {
                                 required property var modelData
-                                Layout.preferredHeight: 34
+                                required property int index
+                                Layout.preferredHeight: index < 4 ? 52 : 34
                                 label: modelData.label
+                                shortcut: modelData.key ? root.keys(["Option"], modelData.key) : ""
                                 enabled: root.noteAuthoring.selectionCount > 0
                                 onClicked: root.noteAuthoring.editSelection(modelData.operation)
                             }

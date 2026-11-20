@@ -886,9 +886,10 @@ void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRe
         // Take the notes out last to first, keeping the destination token
         // in step with the text before it.
         int destination = edit::chartTokenStartAt(text, tokenPosition);
+        const bool copy = request.item == QLatin1String("copy");
         std::sort(positions.begin(), positions.end(), std::greater<int>());
         QString remaining = text;
-        for (const int notePosition : std::as_const(positions)) {
+        for (const int notePosition : copy ? QVector<int>() : positions) {
             const QString next = edit::removeNotes(remaining, {notePosition});
             const edit::TextReplacement change = edit::minimalReplacement(remaining, next);
             if (change.changed && change.end <= destination) {
@@ -902,7 +903,7 @@ void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRe
         const QString moved = edit::pasteNotes(base, target, clip, &placed);
         noteSelection_ = {};
         applyText(moved);
-        publishAuthoringStatus(qtTrId("qml.charting.status_moved").arg(placed));
+        publishAuthoringStatus(qtTrId(copy ? "qml.charting.status_duplicated" : "qml.charting.status_moved").arg(placed));
         return;
     }
     case Action::SetLength:

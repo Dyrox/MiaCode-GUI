@@ -446,6 +446,19 @@ Item {
         }
         gridDivision: root.noteAuthoring ? root.noteAuthoring.gridDivision : 0
         laneOrder: root.preferences ? root.preferences.chartingLaneOrder : 1
+        // The tool's note, with its marks, shown faintly where a click puts it.
+        pointerIcon: {
+            const authoring = root.noteAuthoring
+            if (!authoring || authoring.tool < 1 || authoring.tool > 3)
+                return ""
+            const ex = authoring.exNote ? "_ex" : ""
+            if (authoring.tool === 2)
+                return (authoring.breakNote ? "hold_break" : "hold") + ex
+            // The plain star is the skin's "slide" icon.
+            if (authoring.tool === 3 || authoring.starTap)
+                return authoring.breakNote ? "star_break" + ex : ex !== "" ? "star_ex" : "slide"
+            return (authoring.breakNote ? "tap_break" : "tap") + ex
+        }
         // Number keys pick the note kind and letters toggle its marks; with
         // the command key, the note operations.
         function shortcutFor(event) {
@@ -506,6 +519,20 @@ Item {
                 root.timelineSession.authoringTouch(laneEditor.placingSecond, pad, advance)
                 if (advance)
                     laneEditor.advanceTouchTime()
+            }
+        }
+        // ⌥B / ⌥X / ⌥S mark the selected notes break, EX or break-slide.
+        Repeater {
+            model: [{ key: "B", operation: "b" }, { key: "X", operation: "x" }, { key: "S", operation: "B" }]
+            delegate: Item {
+                required property var modelData
+                Shortcut {
+                    sequence: "Alt+" + modelData.key
+                    context: Qt.WindowShortcut
+                    enabled: laneEditor.visible && root.noteAuthoring !== null
+                             && root.noteAuthoring.selectionCount > 0
+                    onActivated: root.noteAuthoring.editSelection(modelData.operation)
+                }
             }
         }
         Binding {

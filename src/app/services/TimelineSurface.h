@@ -33,7 +33,8 @@ struct TimelineAuthoringGesture {
         // endLane at endSecond, after the star's one-beat wait. With onNote
         // it replaces the course of the slide already there.
         Slide,
-        // The hold at (second, lane) with its tail dragged to endSecond.
+        // The hold or slide at (second, lane) given the length endSecond -
+        // second (a hold's tail or a slide's end dragged).
         Resize,
         // Paste the copied notes from `second` on.
         Paste,
@@ -43,7 +44,8 @@ struct TimelineAuthoringGesture {
         // `(shape)` as the BPM from `second` on.
         Bpm,
         // The selected notes moved together: the earliest from `second` to
-        // `endSecond`, all of them by endLane - lane lanes.
+        // `endSecond`, all of them by endLane - lane lanes. secondary copies
+        // them there instead.
         MoveSelection,
     };
     Kind kind = Kind::Click;

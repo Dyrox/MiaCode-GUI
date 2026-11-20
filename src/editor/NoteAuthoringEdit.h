@@ -43,7 +43,8 @@ enum class NoteAuthoringAction {
     // slides around, or "scale:N/D" to stretch them in time.
     EditSelection,
     // Move the selected notes together: the earliest to the token at
-    // (line, column), all rotated by `laneDelta` lanes.
+    // (line, column), all rotated by `laneDelta` lanes. With `item` "copy"
+    // the originals stay.
     MoveSelection,
 };
 

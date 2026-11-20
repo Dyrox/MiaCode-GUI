@@ -3939,6 +3939,10 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Moved %1 notes</source>
         <translation>%1 個のノーツを移動しました</translation>
     </message>
+    <message id="qml.charting.status_duplicated">
+        <source>Copied %1 notes there</source>
+        <translation>%1 個のノーツをコピーしました</translation>
+    </message>
     <message id="qml.charting.status_no_selection">
         <source>Select notes on the timeline first by dragging over empty space</source>
         <translation>先にタイムラインの空白をドラッグしてノーツを選択してください</translation>

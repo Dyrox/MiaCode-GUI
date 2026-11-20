@@ -3939,6 +3939,10 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Moved %1 notes</source>
         <translation>Moved %1 notes</translation>
     </message>
+    <message id="qml.charting.status_duplicated">
+        <source>Copied %1 notes there</source>
+        <translation>Copied %1 notes there</translation>
+    </message>
     <message id="qml.charting.status_no_selection">
         <source>Select notes on the timeline first by dragging over empty space</source>
         <translation>Select notes on the timeline first by dragging over empty space</translation>

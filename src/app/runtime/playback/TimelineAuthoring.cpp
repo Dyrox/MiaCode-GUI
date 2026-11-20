@@ -239,8 +239,9 @@ void miacode::runtime::PlaybackCoordinator::handleTimelineAuthoring(
         return;
     }
     case TimelineAuthoringGesture::Kind::Resize: {
-        // A hold's tail dragged along its lane: the length becomes the grid
-        // steps from head to the new tail, at least one.
+        // A hold's tail, or a slide's end on its own key, dragged: the length
+        // becomes the grid steps from `second` to `endSecond`, at least one.
+        // (For a slide the lane editor counts from the star's start.)
         if (!noteAt(gesture.second, gesture.lane, &request.line, &request.column)) {
             return;
         }
@@ -284,6 +285,7 @@ void miacode::runtime::PlaybackCoordinator::handleTimelineAuthoring(
         }
         request.action = NoteAuthoringAction::MoveSelection;
         request.target = QStringLiteral("-");
+        request.item = gesture.secondary ? QStringLiteral("copy") : QString();
         request.laneDelta = gesture.lane <= 8 && gesture.endLane <= 8 ? gesture.endLane - gesture.lane : 0;
         authoring.send(request);
         return;
