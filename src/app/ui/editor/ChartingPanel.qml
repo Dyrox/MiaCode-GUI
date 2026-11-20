@@ -174,6 +174,10 @@ Rectangle {
         id: operation
         required property string label
         property string shortcut: ""
+        // Skin icons of what the operation turns into what ("tap" →
+        // "tap_break"), drawn small in the corner.
+        property string fromIcon: ""
+        property string toIcon: ""
         Accessible.name: operation.label
         Layout.fillWidth: true
         Layout.preferredHeight: 52
@@ -186,21 +190,53 @@ Rectangle {
         }
         contentItem: Item {
             opacity: operation.enabled ? 1.0 : 0.45
-            // With a shortcut line the label sits on top; alone, centred.
+            // With a shortcut or icon line the label sits on top; alone, centred.
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: operation.shortcut !== "" ? 8 : Math.round((parent.height - height) / 2)
+                y: operation.shortcut !== "" || operation.fromIcon !== "" ? 8 : Math.round((parent.height - height) / 2)
                 text: operation.label
                 color: Theme.colors.text.primary
                 font.family: Theme.uiFont
                 font.pixelSize: Theme.uiFontSize
+            }
+            Row {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: 5
+                spacing: 1
+                visible: operation.fromIcon !== "" && operation.toIcon !== ""
+                Image {
+                    width: 16
+                    height: 16
+                    sourceSize: Qt.size(32, 32)
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    source: operation.fromIcon !== "" ? "image://noteicon/" + operation.fromIcon : ""
+                }
+                Text {
+                    height: 16
+                    verticalAlignment: Text.AlignVCenter
+                    text: "→"
+                    color: Theme.colors.text.secondary
+                    font.family: Theme.uiFont
+                    font.pixelSize: Theme.uiFontSize - 2
+                }
+                Image {
+                    width: 16
+                    height: 16
+                    sourceSize: Qt.size(32, 32)
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    source: operation.toIcon !== "" ? "image://noteicon/" + operation.toIcon : ""
+                }
             }
             Text {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.margins: 4
                 visible: operation.shortcut !== ""
-                text: "(" + operation.shortcut + ")"
+                // Beside the icons the brackets would crowd them.
+                text: operation.fromIcon !== "" ? operation.shortcut : "(" + operation.shortcut + ")"
                 color: Theme.colors.text.secondary
                 font.family: Theme.uiFont
                 font.pixelSize: Theme.uiFontSize - 1
@@ -435,21 +471,24 @@ Rectangle {
                         rowSpacing: 4
                         Repeater {
                             model: [
-                                { label: qsTrId("qml.charting.break"), operation: "b", key: "B" },
-                                { label: qsTrId("qml.charting.ex"), operation: "x", key: "X" },
+                                { label: qsTrId("qml.charting.break"), operation: "b", key: "B",
+                                  from: "tap", to: "tap_break" },
+                                { label: qsTrId("qml.charting.ex"), operation: "x", key: "X", from: "tap", to: "tap_ex" },
                                 { label: qsTrId("qml.charting.firework"), operation: "f" },
-                                { label: qsTrId("qml.charting.slide_break"), operation: "B", key: "S" },
-                                { label: qsTrId("qml.charting.hold_to_taps"), operation: "taps" },
+                                { label: qsTrId("qml.charting.slide_break"), operation: "B", key: "S",
+                                  from: "slide_track", to: "slide_track_break" },
+                                { label: qsTrId("qml.charting.hold_to_taps"), operation: "taps", from: "hold", to: "tap" },
                                 { label: qsTrId("qml.charting.swap_slide"), operation: "swap" },
                                 { label: qsTrId("qml.charting.scale_double"), operation: "scale:2/1" },
                                 { label: qsTrId("qml.charting.scale_half"), operation: "scale:1/2" }
                             ]
                             delegate: OperationButton {
                                 required property var modelData
-                                required property int index
-                                Layout.preferredHeight: index < 4 ? 52 : 34
+                                Layout.preferredHeight: 52
                                 label: modelData.label
                                 shortcut: modelData.key ? root.keys(["Option"], modelData.key) : ""
+                                fromIcon: modelData.from || ""
+                                toIcon: modelData.to || ""
                                 enabled: root.noteAuthoring.selectionCount > 0
                                 onClicked: root.noteAuthoring.editSelection(modelData.operation)
                             }
