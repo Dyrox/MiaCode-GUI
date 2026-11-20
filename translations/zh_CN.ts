@@ -3675,30 +3675,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Preview rendering mode</source>
         <translation>预览渲染模式</translation>
     </message>
-    <message id="qml.charting.off">
-        <source>Off</source>
-        <translation>关闭</translation>
-    </message>
-    <message id="qml.charting.tap">
-        <source>Tap</source>
-        <translation>Tap</translation>
-    </message>
-    <message id="qml.charting.hold">
-        <source>Hold</source>
-        <translation>Hold</translation>
-    </message>
-    <message id="qml.charting.slide">
-        <source>Slide</source>
-        <translation>Slide</translation>
-    </message>
-    <message id="qml.charting.touch">
-        <source>Touch</source>
-        <translation>Touch</translation>
-    </message>
-    <message id="qml.charting.touch_hold">
-        <source>Touch Hold</source>
-        <translation>Touch Hold</translation>
-    </message>
     <message id="qml.charting.break">
         <source>Break</source>
         <translation>绝赞</translation>
@@ -3718,22 +3694,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.firework">
         <source>Firework</source>
         <translation>烟花</translation>
-    </message>
-    <message id="qml.charting.hold_length">
-        <source>Hold length when both clicks are on the same beat</source>
-        <translation>两次点击在同一拍时的 Hold 长度</translation>
-    </message>
-    <message id="qml.charting.slide_length">
-        <source>Slide length</source>
-        <translation>Slide 时长</translation>
-    </message>
-    <message id="qml.charting.hold_pending">
-        <source>Hold from %1: move the cursor and click again</source>
-        <translation>Hold 起点 %1：移动光标后再点一次</translation>
-    </message>
-    <message id="qml.charting.hint">
-        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
-        <translation>写入编辑器光标所在的拍。左键添加或取消，右键删除。Hold：点起点，移动光标，再点一次。Slide：从起点按键拖到终点按键。鼠标在预览上时，←→ 写入并前进一拍，↑↓ 只移动一拍。在时间轴上：点击放置，拖动音符移动它，在空白处拖动框选；用 Hold 工具时沿同一轨拖动画 Hold。</translation>
     </message>
     <message id="qml.charting.shape_straight">
         <source>Straight</source>
@@ -3867,10 +3827,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Head</source>
         <translation>星头</translation>
     </message>
-    <message id="qml.charting.hold_length_short">
-        <source>Length</source>
-        <translation>长度</translation>
-    </message>
     <message id="qml.charting.zoom">
         <source>Zoom</source>
         <translation>缩放</translation>
@@ -3915,14 +3871,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Festival chain</source>
         <translation>应用Festival特性</translation>
     </message>
-    <message id="qml.charting.chain_hint">
-        <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>
-        <translation>每次拖动都从上一段的终点接着画。右键结束连段。</translation>
-    </message>
-    <message id="qml.charting.chain_pending">
-        <source>Chain continues from %1</source>
-        <translation>从 %1 号键继续连段</translation>
-    </message>
     <message id="qml.charting.step_back">
         <source>Previous beat</source>
         <translation>上一拍</translation>
@@ -3946,18 +3894,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.paste">
         <source>Paste</source>
         <translation>粘贴</translation>
-    </message>
-    <message id="qml.charting.paste_hint">
-        <source>Writes the copied notes from the caret beat on, keeping their spacing.</source>
-        <translation>从光标所在的拍开始写入复制的音符，保持原有间隔。</translation>
-    </message>
-    <message id="qml.charting.bpm_hint">
-        <source>BPM written at the caret beat (Enter)</source>
-        <translation>在光标所在拍写入 BPM（回车）</translation>
-    </message>
-    <message id="qml.charting.division_hint">
-        <source>Subdivision {N} written at the caret beat (Enter)</source>
-        <translation>在光标所在拍写入分音 {N}（回车）</translation>
     </message>
     <message id="qml.charting.status_selected">
         <source>%1 notes selected</source>

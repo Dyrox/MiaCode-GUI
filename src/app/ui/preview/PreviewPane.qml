@@ -9,7 +9,7 @@ Rectangle {
     required property var previewSession
     required property var preferences
     required property var exportSession
-    // Graphical charting tool state; the toolbar hides without it.
+    // GUI charting state, for the touch picker's hint over the stage.
     property var noteAuthoring: null
     property bool documentAvailable: true
     property bool latencyActive: false
@@ -116,23 +116,11 @@ Rectangle {
         previewSession: root.previewSession
     }
 
-    ChartingToolbar {
-        id: chartingToolbar
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: heading.bottom
-        noteAuthoring: root.noteAuthoring
-        // In GUI charting the editor's panel holds these tools.
-        visible: root.noteAuthoring !== null && !root.noteAuthoring.guiMode
-                 && !root.exportPageActive && root.documentAvailable
-        height: visible ? implicitHeight : 0
-    }
-
     Item {
         id: stageArea
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: chartingToolbar.bottom
+        anchors.top: heading.bottom
         anchors.bottom: transport.top
         clip: true
 

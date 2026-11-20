@@ -806,29 +806,6 @@ void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRe
 
     edit::NoteAuthoringRequest resolved = request;
     switch (request.action) {
-    case Action::HoldBegin:
-        holdAnchor_ = {document_.scope(), revision, edit::chartTokenStartAt(text, tokenPosition)};
-        takeFocus();
-        return;
-    case Action::HoldCancel:
-        holdAnchor_ = {};
-        return;
-    case Action::HoldFinish: {
-        const HoldAnchor start = std::exchange(holdAnchor_, HoldAnchor{});
-        // Any edit between the two clicks moves the remembered token.
-        if (start.tokenStart < 0 || start.scope != document_.scope() || start.revision != revision) return;
-        const int endToken = edit::chartTokenStartAt(text, tokenPosition);
-        QString length = edit::beatDurationBetween(text, start.tokenStart, endToken);
-        if (length.isEmpty()) length = request.defaultDuration;
-        resolved.action = Action::Add;
-        resolved.item = request.item + length;
-        // A hold clicked backwards starts at the later click's token.
-        tokenPosition = qMin(start.tokenStart, endToken);
-        break;
-    }
-    case Action::ExtendSlide:
-        applyPlan(edit::planSlideExtension(text, tokenPosition, request.target, request.item));
-        return;
     case Action::Move: {
         const int target = edit::textPositionAt(text, request.targetLine, request.targetColumn);
         if (target >= 0) {

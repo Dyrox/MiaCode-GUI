@@ -255,13 +255,6 @@ private:
     QHash<int, TouchUndoAnchor> touchUndoAnchors_;
     int nextTouchToken_ = 1;
     int pendingTouchAnchor_ = -1;
-    // A two-click hold's first token; only valid while the text is unchanged.
-    struct HoldAnchor {
-        QString scope;
-        qulonglong revision = 0;
-        int tokenStart = -1;
-    };
-    HoldAnchor holdAnchor_;
     // Set while a GUI charting request is applied: its edit is laid out
     // again with the chart's 谱面整理 options.
     bool tidyAuthoring_ = false;

@@ -939,15 +939,6 @@ void PreviewRuntime::hoverNoteAuthoring(const QPointF& logicalPoint)
     update();
 }
 
-void PreviewRuntime::setNoteAuthoringKeyboardTarget(const QString& target)
-{
-    if (frameState_.noteAuthoringTool == 0 || frameState_.hoveredAuthoringTarget == target) {
-        return;
-    }
-    frameState_.hoveredAuthoringTarget = target;
-    update();
-}
-
 void PreviewRuntime::clearNoteAuthoringHover()
 {
     if (frameState_.hoveredAuthoringTarget.isEmpty()) {

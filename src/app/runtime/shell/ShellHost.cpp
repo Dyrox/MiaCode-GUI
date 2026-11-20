@@ -133,24 +133,6 @@ bool Session::eventFilter(QObject*, QEvent* event)
             return true;
         }
 
-        // Graphical charting: arrow keys over a highlighted preview target
-        // write there and step a beat (Left/Right), or only step (Up/Down).
-        if (event->type() == QEvent::KeyPress
-            && focusOnWorkbench
-            && scene_ != nullptr
-            && keyEvent->modifiers() == Qt::NoModifier
-            && (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right
-                || keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down)) {
-            const QString hovered = scene_->noteAuthoringHoverTarget();
-            if (!hovered.isEmpty() && editorAuthoringContextActive()) {
-                const QString next = applicationServices_.noteAuthoring().keyboardStep(keyEvent->key(), hovered);
-                if (!next.isEmpty()) {
-                    scene_->setNoteAuthoringKeyboardTarget(next);
-                    return true;
-                }
-            }
-        }
-
         // Ctrl (Command on macOS) arms touch-pad authoring on the preview from
         // anywhere in the root window, not only from the focused editor: the
         // click it enables lands on the preview, which does not keep the

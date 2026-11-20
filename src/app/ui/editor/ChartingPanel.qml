@@ -311,37 +311,6 @@ Rectangle {
                         onActivated: index => root.noteAuthoring.slideHead = index
                     }
                 }
-                LabeledRow {
-                    label: qsTrId("qml.charting.hold_length_short")
-                    Text {
-                        text: "Hold"
-                        color: Theme.colors.text.secondary
-                        font.family: Theme.uiFont
-                        font.pixelSize: Theme.uiFontSize
-                    }
-                    AppTextField {
-                        Layout.fillWidth: true
-                        text: root.noteAuthoring.holdLength
-                        onEditingFinished: {
-                            root.noteAuthoring.holdLength = text
-                            text = Qt.binding(() => root.noteAuthoring.holdLength)
-                        }
-                    }
-                    Text {
-                        text: "Slide"
-                        color: Theme.colors.text.secondary
-                        font.family: Theme.uiFont
-                        font.pixelSize: Theme.uiFontSize
-                    }
-                    AppTextField {
-                        Layout.fillWidth: true
-                        text: root.noteAuthoring.slideLength
-                        onEditingFinished: {
-                            root.noteAuthoring.slideLength = text
-                            text = Qt.binding(() => root.noteAuthoring.slideLength)
-                        }
-                    }
-                }
             }
 
             Section {
@@ -518,9 +487,6 @@ Rectangle {
                           ? qsTrId("qml.charting.picking_slide")
                           : root.laneEditor && root.laneEditor.placingKind === 2
                           ? qsTrId("qml.charting.placing_slide").arg(root.laneEditor.placingLane)
-                          : root.noteAuthoring.pendingTarget !== ""
-                          ? (root.tool === 3 ? qsTrId("qml.charting.chain_pending")
-                                             : qsTrId("qml.charting.hold_pending")).arg(root.noteAuthoring.pendingTarget)
                           : root.noteAuthoring.statusMessage
                     wrapMode: Text.Wrap
                     color: Theme.colors.text.secondary

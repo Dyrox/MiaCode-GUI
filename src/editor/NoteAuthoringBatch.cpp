@@ -699,38 +699,6 @@ QString extendChartTo(const QString& text, int division, int steps, int* targetT
     return result;
 }
 
-NoteAuthoringEditPlan planSlideExtension(const QString& text, int caretPosition,
-                                         const QString& headTarget, const QString& fragment)
-{
-    NoteAuthoringEditPlan plan;
-    const ChartTokenScan token = scanChartToken(text, caretPosition);
-    plan.tokenStart = token.tokenStart;
-    const ChartTokenItem* last = nullptr;
-    for (const ChartTokenItem& item : token.items) {
-        const NoteItemInfo info = classifyNoteItem(text.mid(item.noteStart, item.noteEnd - item.noteStart));
-        if (info.kind == NoteItemKind::Slide && info.target == headTarget) {
-            last = &item;
-        }
-    }
-    if (last == nullptr || fragment.trimmed().isEmpty()) {
-        return plan;
-    }
-    // The new segment goes ahead of the last part's length and its break /
-    // mine marks, which belong to the whole chain: "1-5b[4:1]" -> "1-5q3b[4:1]".
-    const QString item = text.mid(last->noteStart, last->noteEnd - last->noteStart);
-    int insertAt = item.lastIndexOf(QLatin1Char('['));
-    if (insertAt < 0) {
-        insertAt = item.size();
-    }
-    while (insertAt > 1 && QStringLiteral("bxm").contains(item.at(insertAt - 1))) {
-        --insertAt;
-    }
-    plan.replaceStart = last->noteStart + insertAt;
-    plan.insertionText = fragment.trimmed();
-    plan.valid = true;
-    return plan;
-}
-
 NoteAuthoringEditPlan planTokenControl(const QString& text, int caretPosition, QChar open, const QString& value)
 {
     NoteAuthoringEditPlan plan;

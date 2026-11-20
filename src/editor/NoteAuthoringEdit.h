@@ -15,14 +15,6 @@ enum class NoteAuthoringAction {
     Add,
     // Remove the first item on the target, whatever its kind.
     Remove,
-    // Two-click holds: remember the cursor token, then write the hold into it
-    // with the length up to the token the cursor is in at the second click.
-    HoldBegin,
-    HoldFinish,
-    HoldCancel,
-    // Continue the last slide on `target` in the token with another segment
-    // (`item` is the shape and end lane, e.g. "q3").
-    ExtendSlide,
     // Move the note at (line, column) to the token at (targetLine,
     // targetColumn), rotated by `laneDelta` lanes.
     Move,
@@ -58,7 +50,8 @@ enum class NoteAuthoringAction {
 struct NoteAuthoringRequest {
     NoteAuthoringAction action = NoteAuthoringAction::Toggle;
     QString target;
-    // Complete item text; for HoldFinish the item without its `[N:M]` length.
+    // Complete item text; for a hold spanning to (lengthLine, lengthColumn)
+    // the item without its `[N:M]` length.
     QString item;
     // Length written when a hold starts and ends in the same token.
     QString defaultDuration;

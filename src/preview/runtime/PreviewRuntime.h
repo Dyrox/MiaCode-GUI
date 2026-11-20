@@ -206,9 +206,6 @@ public:
                                const QVector<miacode::preview::scene::NoteAuthoringGuideArrow>& guideArrows);
     void hoverNoteAuthoring(const QPointF& logicalPoint);
     void clearNoteAuthoringHover();
-    QString noteAuthoringHoverTarget() const { return frameState_.hoveredAuthoringTarget; }
-    // Arrow-key placement moves the highlighted target until the mouse moves.
-    void setNoteAuthoringKeyboardTarget(const QString& target);
     bool beginNoteAuthoringGesture(Qt::MouseButton button, const QPointF& logicalPoint);
     void moveNoteAuthoringGesture(const QPointF& logicalPoint);
     bool finishNoteAuthoringGesture(const QPointF& logicalPoint);

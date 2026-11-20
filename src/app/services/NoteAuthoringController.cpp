@@ -17,20 +17,6 @@ using miacode::preview::scene::NoteAuthoringTool;
 // A click inside one lane sector must not be read as a looping slide.
 constexpr qreal kMinimumSlideStrokeLogical = 40.0;
 
-// Accepts "4:1", "[4:1]" or "#1.5"; anything empty falls back to one beat.
-QString normalizedLength(const QString& length)
-{
-    QString text = length.trimmed();
-    if (text.startsWith(QLatin1Char('['))) {
-        text.remove(0, 1);
-    }
-    if (text.endsWith(QLatin1Char(']'))) {
-        text.chop(1);
-    }
-    text = text.trimmed();
-    return text.isEmpty() ? QStringLiteral("[4:1]") : QStringLiteral("[%1]").arg(text);
-}
-
 qreal strokeLength(const QVector<QPointF>& path)
 {
     qreal length = 0.0;
@@ -51,19 +37,6 @@ bool isTouchTarget(const QString& target)
     return !target.isEmpty() && !target.at(0).isDigit();
 }
 
-// The target `offset` lanes around the ring; the centre pad stays put.
-QString rotatedTarget(const QString& target, int offset)
-{
-    const int lane = laneOfTarget(target);
-    if (lane > 0) {
-        return QString::number(miacode::preview::scene::wrappedLane(lane + offset));
-    }
-    if (target.size() == 2 && target.at(1).isDigit()) {
-        return miacode::preview::scene::padTokenForRing(target.at(0), target.at(1).digitValue() + offset);
-    }
-    return target;
-}
-
 } // namespace
 
 NoteAuthoringController::NoteAuthoringController(EditorSyncController& editorSync, QObject* parent)
@@ -80,7 +53,6 @@ void NoteAuthoringController::setTool(int tool)
     if (tool_ == normalized) {
         return;
     }
-    cancelPending();
     cancelSlidePick();
     tool_ = normalized;
     emit toolChanged();
@@ -102,28 +74,11 @@ void NoteAuthoringController::setGuiMode(bool enabled)
     emit previewGuideChanged();
 }
 
-void NoteAuthoringController::setSlideChain(bool enabled)
-{
-    if (!enabled) {
-        cancelPending();
-    }
-    assign(&slideChain_, enabled);
-}
-
-void NoteAuthoringController::setHoldLength(const QString& length)
-{
-    assign(&holdLength_, normalizedLength(length));
-}
-
-void NoteAuthoringController::setSlideLength(const QString& length)
-{
-    assign(&slideLength_, normalizedLength(length));
-}
 
 int NoteAuthoringController::previewTool() const
 {
     if (!guiMode_) {
-        return int(tool_);
+        return int(NoteAuthoringTool::None);
     }
     if (slidePicking()) {
         return int(NoteAuthoringTool::Slide);
@@ -156,7 +111,7 @@ int NoteAuthoringController::slidePickCurrentLane() const
 
 QString NoteAuthoringController::previewAnchor() const
 {
-    return slidePicking() ? QString::number(slidePickCurrentLane()) : pendingTarget_;
+    return slidePicking() ? QString::number(slidePickCurrentLane()) : QString();
 }
 
 bool NoteAuthoringController::previewShowsTargets() const
@@ -332,81 +287,10 @@ void NoteAuthoringController::handlePickGesture(const miacode::preview::scene::N
 
 void NoteAuthoringController::handleGesture(const miacode::preview::scene::NoteAuthoringGesture& gesture)
 {
-    // GUI charting places through the lane editor; the preview only serves
-    // its touch and slide pickers.
+    // Charting places through the lane editor; the preview only serves its
+    // touch and slide pickers.
     if (guiMode_) {
         handlePickGesture(gesture);
-        return;
-    }
-    if (gesture.tool != tool_ || tool_ == NoteAuthoringTool::None) {
-        return;
-    }
-    const bool click = !gesture.startTarget.isEmpty() && gesture.startTarget == gesture.endTarget;
-    if (gesture.secondary) {
-        // Right click: abandon a pending hold or chain first, otherwise erase.
-        if (!pendingTarget_.isEmpty()) {
-            cancelPending();
-        } else if (click) {
-            sendSimple(NoteAuthoringAction::Remove, gesture.startTarget);
-        }
-        return;
-    }
-
-    switch (tool_) {
-    case NoteAuthoringTool::Tap:
-    case NoteAuthoringTool::Touch:
-        if (click) {
-            sendSimple(NoteAuthoringAction::Toggle, gesture.startTarget, itemForTarget(gesture.startTarget));
-        }
-        break;
-    case NoteAuthoringTool::Hold:
-    case NoteAuthoringTool::TouchHold:
-        if (!click) {
-            break;
-        }
-        if (pendingTarget_.isEmpty()) {
-            if (sendSimple(NoteAuthoringAction::HoldBegin, gesture.startTarget)) {
-                setPendingTarget(gesture.startTarget);
-            }
-        } else {
-            // The second click may land anywhere: the hold stays on its first
-            // target and only takes its length from the cursor's new token.
-            const QString target = pendingTarget_;
-            setPendingTarget(QString());
-            sendSimple(NoteAuthoringAction::HoldFinish, target, holdItemWithoutLength(target));
-        }
-        break;
-    case NoteAuthoringTool::Slide:
-        handleSlideGesture(gesture);
-        break;
-    case NoteAuthoringTool::None:
-        break;
-    }
-}
-
-void NoteAuthoringController::handleSlideGesture(const miacode::preview::scene::NoteAuthoringGesture& gesture)
-{
-    const int endLane = laneOfTarget(gesture.endTarget);
-    if (endLane == 0 || strokeLength(gesture.path) < kMinimumSlideStrokeLogical) {
-        return;
-    }
-    // A running chain continues from its last end, wherever the drag starts.
-    if (slideChain_ && !pendingTarget_.isEmpty()) {
-        const int fromLane = laneOfTarget(pendingTarget_);
-        const QString shape = miacode::preview::scene::matchSlideShape(fromLane, endLane, gesture.path);
-        if (!shape.isEmpty() && sendSimple(NoteAuthoringAction::ExtendSlide, chainHead_, shape.mid(1))) {
-            setPendingTarget(QString::number(endLane));
-        }
-        return;
-    }
-    const int startLane = laneOfTarget(gesture.startTarget);
-    if (startLane == 0) {
-        return;
-    }
-    const QString item = slideItem(startLane, endLane, gesture.path);
-    if (!item.isEmpty() && sendSimple(NoteAuthoringAction::Add, gesture.startTarget, item) && slideChain_) {
-        chainHead_ = gesture.startTarget;
-        setPendingTarget(QString::number(endLane));
     }
 }
 
@@ -450,15 +334,6 @@ QString NoteAuthoringController::headModifiers() const
     return modifiers;
 }
 
-QString NoteAuthoringController::slideItem(int startLane, int endLane, const QVector<QPointF>& path) const
-{
-    const bool opposite = miacode::preview::scene::wrappedLane(startLane + 4) == endLane;
-    const QString shape = wifi_ && opposite
-        ? QStringLiteral("%1w%2").arg(startLane).arg(endLane)
-        : miacode::preview::scene::matchSlideShape(startLane, endLane, path);
-    return shape.isEmpty() ? QString() : slideItemForShape(shape, QString());
-}
-
 QString NoteAuthoringController::slideItemForShape(const QString& shapeKey, const QString& length) const
 {
     if (shapeKey.size() < 3) {
@@ -495,29 +370,6 @@ QVariantList NoteAuthoringController::slideShapes(int startLane, int endLane) co
     return shapes;
 }
 
-QString NoteAuthoringController::keyboardStep(int key, const QString& hovered)
-{
-    if (tool_ == NoteAuthoringTool::None || hovered.isEmpty()) {
-        return QString();
-    }
-    if (key == Qt::Key_Up || key == Qt::Key_Down) {
-        stepBeat(key == Qt::Key_Down ? 1 : -1);
-        return hovered;
-    }
-    if (key != Qt::Key_Left && key != Qt::Key_Right) {
-        return QString();
-    }
-    // Quick placement writes single notes only; holds and slides need a span.
-    if (tool_ == NoteAuthoringTool::Tap || tool_ == NoteAuthoringTool::Touch) {
-        const QString item = itemForTarget(hovered);
-        if (!item.isEmpty()) {
-            sendSimple(NoteAuthoringAction::Add, hovered, item);
-        }
-    }
-    stepBeat(1);
-    return rotatedTarget(hovered, key == Qt::Key_Right ? 1 : -1);
-}
-
 bool NoteAuthoringController::send(NoteAuthoringRequest request)
 {
     request.defaultDuration = holdLength_;
@@ -533,17 +385,6 @@ bool NoteAuthoringController::sendSimple(NoteAuthoringAction action, const QStri
     request.target = target;
     request.item = item;
     return send(request);
-}
-
-void NoteAuthoringController::cancelPending()
-{
-    if (pendingTarget_.isEmpty()) {
-        return;
-    }
-    const QString target = pendingTarget_;
-    setPendingTarget(QString());
-    chainHead_.clear();
-    sendSimple(NoteAuthoringAction::HoldCancel, target);
 }
 
 void NoteAuthoringController::copySelection()
@@ -612,14 +453,6 @@ void NoteAuthoringController::setTouchPad(const QString& pad)
             && normalized.at(1) >= QLatin1Char('1') && normalized.at(1) <= QLatin1Char('8'));
     if (valid) {
         assign(&touchPad_, normalized);
-    }
-}
-
-void NoteAuthoringController::setPendingTarget(const QString& target)
-{
-    if (pendingTarget_ != target) {
-        pendingTarget_ = target;
-        emit pendingTargetChanged();
     }
 }
 

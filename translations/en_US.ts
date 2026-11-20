@@ -3675,30 +3675,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Preview rendering mode</source>
         <translation>Preview rendering mode</translation>
     </message>
-    <message id="qml.charting.off">
-        <source>Off</source>
-        <translation>Off</translation>
-    </message>
-    <message id="qml.charting.tap">
-        <source>Tap</source>
-        <translation>Tap</translation>
-    </message>
-    <message id="qml.charting.hold">
-        <source>Hold</source>
-        <translation>Hold</translation>
-    </message>
-    <message id="qml.charting.slide">
-        <source>Slide</source>
-        <translation>Slide</translation>
-    </message>
-    <message id="qml.charting.touch">
-        <source>Touch</source>
-        <translation>Touch</translation>
-    </message>
-    <message id="qml.charting.touch_hold">
-        <source>Touch Hold</source>
-        <translation>Touch Hold</translation>
-    </message>
     <message id="qml.charting.break">
         <source>Break</source>
         <translation>Break</translation>
@@ -3718,22 +3694,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.firework">
         <source>Firework</source>
         <translation>Firework</translation>
-    </message>
-    <message id="qml.charting.hold_length">
-        <source>Hold length when both clicks are on the same beat</source>
-        <translation>Hold length when both clicks are on the same beat</translation>
-    </message>
-    <message id="qml.charting.slide_length">
-        <source>Slide length</source>
-        <translation>Slide length</translation>
-    </message>
-    <message id="qml.charting.hold_pending">
-        <source>Hold from %1: move the cursor and click again</source>
-        <translation>Hold from %1: move the cursor and click again</translation>
-    </message>
-    <message id="qml.charting.hint">
-        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
-        <translation>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</translation>
     </message>
     <message id="qml.charting.shape_straight">
         <source>Straight</source>
@@ -3867,10 +3827,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Head</source>
         <translation>Head</translation>
     </message>
-    <message id="qml.charting.hold_length_short">
-        <source>Length</source>
-        <translation>Length</translation>
-    </message>
     <message id="qml.charting.zoom">
         <source>Zoom</source>
         <translation>Zoom</translation>
@@ -3915,14 +3871,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Festival chain</source>
         <translation>Festival chain</translation>
     </message>
-    <message id="qml.charting.chain_hint">
-        <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>
-        <translation>Each drag continues the last slide from where it ended. Right click ends the chain.</translation>
-    </message>
-    <message id="qml.charting.chain_pending">
-        <source>Chain continues from %1</source>
-        <translation>Chain continues from %1</translation>
-    </message>
     <message id="qml.charting.step_back">
         <source>Previous beat</source>
         <translation>Previous beat</translation>
@@ -3946,18 +3894,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.paste">
         <source>Paste</source>
         <translation>Paste</translation>
-    </message>
-    <message id="qml.charting.paste_hint">
-        <source>Writes the copied notes from the caret beat on, keeping their spacing.</source>
-        <translation>Writes the copied notes from the caret beat on, keeping their spacing.</translation>
-    </message>
-    <message id="qml.charting.bpm_hint">
-        <source>BPM written at the caret beat (Enter)</source>
-        <translation>BPM written at the caret beat (Enter)</translation>
-    </message>
-    <message id="qml.charting.division_hint">
-        <source>Subdivision {N} written at the caret beat (Enter)</source>
-        <translation>Subdivision {N} written at the caret beat (Enter)</translation>
     </message>
     <message id="qml.charting.status_selected">
         <source>%1 notes selected</source>

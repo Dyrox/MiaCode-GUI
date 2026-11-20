@@ -237,7 +237,6 @@ Session::Session(miacode::ApplicationServices& services, QObject* parent)
         scene_->setNoteAuthoringGuide(authoring.previewShowsTargets(), authoring.previewGuidePath(),
                                       authoring.previewGuideArrows());
     };
-    connect(&noteAuthoring, &miacode::NoteAuthoringController::pendingTargetChanged, this, pushAuthoringGuide);
     connect(&noteAuthoring, &miacode::NoteAuthoringController::previewGuideChanged, this, pushAuthoringGuide);
     logStartupStage("preview_canvas_created");
     applyEffectivePreviewOutlineVariantToCanvas();

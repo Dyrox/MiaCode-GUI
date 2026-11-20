@@ -3675,30 +3675,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Preview rendering mode</source>
         <translation>プレビューレンダリングモード</translation>
     </message>
-    <message id="qml.charting.off">
-        <source>Off</source>
-        <translation>オフ</translation>
-    </message>
-    <message id="qml.charting.tap">
-        <source>Tap</source>
-        <translation>Tap</translation>
-    </message>
-    <message id="qml.charting.hold">
-        <source>Hold</source>
-        <translation>Hold</translation>
-    </message>
-    <message id="qml.charting.slide">
-        <source>Slide</source>
-        <translation>Slide</translation>
-    </message>
-    <message id="qml.charting.touch">
-        <source>Touch</source>
-        <translation>Touch</translation>
-    </message>
-    <message id="qml.charting.touch_hold">
-        <source>Touch Hold</source>
-        <translation>Touch Hold</translation>
-    </message>
     <message id="qml.charting.break">
         <source>Break</source>
         <translation>Break</translation>
@@ -3718,22 +3694,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.firework">
         <source>Firework</source>
         <translation>花火</translation>
-    </message>
-    <message id="qml.charting.hold_length">
-        <source>Hold length when both clicks are on the same beat</source>
-        <translation>2 回のクリックが同じ拍のときの Hold の長さ</translation>
-    </message>
-    <message id="qml.charting.slide_length">
-        <source>Slide length</source>
-        <translation>Slide の長さ</translation>
-    </message>
-    <message id="qml.charting.hold_pending">
-        <source>Hold from %1: move the cursor and click again</source>
-        <translation>Hold 始点 %1：カーソルを移動してもう一度クリック</translation>
-    </message>
-    <message id="qml.charting.hint">
-        <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
-        <translation>エディタのカーソルがある拍に書き込みます。左クリックで追加・解除、右クリックで削除。Hold：始点をクリックし、カーソルを動かしてもう一度クリック。Slide：始点のボタンから終点のボタンまでドラッグ。プレビュー上で ←→ は書き込んで 1 拍進み、↑↓ は拍だけ移動。タイムラインでは、クリックで配置、ノーツをドラッグで移動、空白をドラッグで選択。Hold ツールでは同じレーンに沿ったドラッグで Hold。</translation>
     </message>
     <message id="qml.charting.shape_straight">
         <source>Straight</source>
@@ -3867,10 +3827,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Head</source>
         <translation>頭</translation>
     </message>
-    <message id="qml.charting.hold_length_short">
-        <source>Length</source>
-        <translation>長さ</translation>
-    </message>
     <message id="qml.charting.zoom">
         <source>Zoom</source>
         <translation>拡大</translation>
@@ -3915,14 +3871,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Festival chain</source>
         <translation>Festival 連結</translation>
     </message>
-    <message id="qml.charting.chain_hint">
-        <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>
-        <translation>ドラッグごとに前の区間の終点から続けて描きます。右クリックで連結を終了。</translation>
-    </message>
-    <message id="qml.charting.chain_pending">
-        <source>Chain continues from %1</source>
-        <translation>%1 から連結を続ける</translation>
-    </message>
     <message id="qml.charting.step_back">
         <source>Previous beat</source>
         <translation>前の拍</translation>
@@ -3946,18 +3894,6 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.paste">
         <source>Paste</source>
         <translation>貼り付け</translation>
-    </message>
-    <message id="qml.charting.paste_hint">
-        <source>Writes the copied notes from the caret beat on, keeping their spacing.</source>
-        <translation>カーソルの拍からコピーしたノーツを間隔を保って書き込みます。</translation>
-    </message>
-    <message id="qml.charting.bpm_hint">
-        <source>BPM written at the caret beat (Enter)</source>
-        <translation>カーソルの拍に BPM を書き込む（Enter）</translation>
-    </message>
-    <message id="qml.charting.division_hint">
-        <source>Subdivision {N} written at the caret beat (Enter)</source>
-        <translation>カーソルの拍に分割 {N} を書き込む（Enter）</translation>
     </message>
     <message id="qml.charting.status_selected">
         <source>%1 notes selected</source>

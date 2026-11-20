@@ -724,7 +724,6 @@ set(MIACODE_UI_QML_FILES
     src/app/ui/timeline/TimelineZoomControl.qml
     src/app/ui/timeline/TimelineZoomMenu.qml
     src/app/ui/timeline/TimelineSettingsMenu.qml
-    src/app/ui/preview/ChartingToolbar.qml
     src/app/ui/preview/PreviewPane.qml
     src/app/ui/preview/PreviewRenderModeMenu.qml
     src/app/ui/preview/PreviewRateMenu.qml

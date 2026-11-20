@@ -94,10 +94,6 @@ QString refineTokenAt(const QString& text, int tokenPosition, int division, doub
 // ahead of an `E`.
 QString extendChartTo(const QString& text, int division, int steps, int* targetToken);
 
-// Adds `fragment` (shape and end lane, e.g. "q3") to the last slide from
-// `headTarget` in the caret token, ahead of its length.
-NoteAuthoringEditPlan planSlideExtension(const QString& text, int caretPosition,
-                                         const QString& headTarget, const QString& fragment);
 // Replaces or inserts the token's `(BPM)` (open '(') or `{N}` (open '{').
 NoteAuthoringEditPlan planTokenControl(const QString& text, int caretPosition,
                                        QChar open, const QString& value);

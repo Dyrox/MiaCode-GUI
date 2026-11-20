@@ -37,12 +37,8 @@ class NoteAuthoringController final : public QObject
     // immediate star `!`.
     Q_PROPERTY(int slideHead READ slideHead WRITE setSlideHead NOTIFY optionsChanged)
     Q_PROPERTY(bool slideBreak READ slideBreak WRITE setSlideBreak NOTIFY optionsChanged)
-    // Each slide drag continues the previous slide instead of starting one.
+    // Festival (连锁): slide picks add up into one chain.
     Q_PROPERTY(bool slideChain READ slideChain WRITE setSlideChain NOTIFY optionsChanged)
-    Q_PROPERTY(QString holdLength READ holdLength WRITE setHoldLength NOTIFY optionsChanged)
-    Q_PROPERTY(QString slideLength READ slideLength WRITE setSlideLength NOTIFY optionsChanged)
-    // A hold's first click, or the lane a slide chain continues from.
-    Q_PROPERTY(QString pendingTarget READ pendingTarget NOTIFY pendingTargetChanged)
     Q_PROPERTY(int selectionCount READ selectionCount NOTIFY statusChanged)
     Q_PROPERTY(int clipCount READ clipCount NOTIFY statusChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusChanged)
@@ -95,12 +91,9 @@ public:
     bool slideBreak() const { return slideBreak_; }
     void setSlideBreak(bool enabled) { assign(&slideBreak_, enabled); }
     bool slideChain() const { return slideChain_; }
-    void setSlideChain(bool enabled);
+    void setSlideChain(bool enabled) { assign(&slideChain_, enabled); }
+    // The length a hold gets when its clicks give it none.
     QString holdLength() const { return holdLength_; }
-    void setHoldLength(const QString& length);
-    QString slideLength() const { return slideLength_; }
-    void setSlideLength(const QString& length);
-    QString pendingTarget() const { return pendingTarget_; }
     int selectionCount() const { return selectionCount_; }
     int clipCount() const { return clipCount_; }
     QString statusMessage() const { return statusMessage_; }
@@ -151,11 +144,7 @@ public:
     Q_INVOKABLE QVariantList slideShapes(int startLane, int endLane) const;
     // Stamps the request with the hold length and queues it for the editor.
     bool send(miacode::editor::NoteAuthoringRequest request);
-    // Arrow keys over the preview: Left/Right write on `hovered` and step one
-    // beat on, Up/Down only step. Returns the target the keyboard moves to.
-    QString keyboardStep(int key, const QString& hovered);
 
-    Q_INVOKABLE void cancelPending();
     Q_INVOKABLE void copySelection();
     Q_INVOKABLE void cutSelection();
     Q_INVOKABLE void deleteSelection();
@@ -174,7 +163,6 @@ signals:
     void toolChanged();
     void guiModeChanged();
     void optionsChanged();
-    void pendingTargetChanged();
     void statusChanged();
     void pickChanged();
     // What the preview should draw for the pickers changed.
@@ -195,8 +183,6 @@ private:
         }
     }
     QString headModifiers() const;
-    QString slideItem(int startLane, int endLane, const QVector<QPointF>& path) const;
-    void handleSlideGesture(const miacode::preview::scene::NoteAuthoringGesture& gesture);
     void handlePickGesture(const miacode::preview::scene::NoteAuthoringGesture& gesture);
     // By value: callers pass slidePickChain_, which this clears.
     void finishSlidePick(QString shape);
@@ -204,7 +190,6 @@ private:
     int slidePickCurrentLane() const;
     bool sendSimple(miacode::editor::NoteAuthoringAction action, const QString& target,
                     const QString& item = QString());
-    void setPendingTarget(const QString& target);
     void applyStatus(int selectionCount, int clipCount, const QString& message, const QVariantList& clipLayout);
 
     EditorSyncController& editorSync_;
@@ -220,11 +205,9 @@ private:
     int slideHead_ = 0;
     bool slideBreak_ = false;
     bool slideChain_ = false;
+    // Lengths for holds and slides whose clicks give them none.
     QString holdLength_ = QStringLiteral("[4:1]");
     QString slideLength_ = QStringLiteral("[4:1]");
-    QString pendingTarget_;
-    // The head lane of the slide a chain extends.
-    QString chainHead_;
     int selectionCount_ = 0;
     int clipCount_ = 0;
     QString statusMessage_;
