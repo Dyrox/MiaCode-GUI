@@ -41,6 +41,18 @@ enum class NoteAuthoringAction {
     // Mirror or rotate the selected notes in place (`transform`: a
     // chart_transform::ChartTransformOp value).
     TransformSelection,
+    // Write `item` ("[16:3]") as the length of the note at (line, column).
+    SetLength,
+    // Give the one-segment slide at (line, column) the shape, end lane and
+    // length of `item` ("1>5[4:1]"), keeping its marks.
+    EditSlide,
+    // Edit the selected notes: `item` is "b", "x", "f" or "B" to toggle a
+    // mark, "taps" for holds to taps on a 1/gridDivision grid, "swap" to turn
+    // slides around, or "scale:N/D" to stretch them in time.
+    EditSelection,
+    // Move the selected notes together: the earliest to the token at
+    // (line, column), all rotated by `laneDelta` lanes.
+    MoveSelection,
 };
 
 struct NoteAuthoringRequest {
@@ -71,6 +83,13 @@ struct NoteAuthoringRequest {
     // 1/gridDivision grid and write at `tokenFraction` of it (0 < f < 1).
     int gridDivision = 0;
     double tokenFraction = 0.0;
+    // Placement past the chart's end: the named token is its last one, and
+    // `extendSteps` commas of 1/extendDivision bar are added before writing.
+    int extendSteps = -1;
+    int extendDivision = 0;
+    // GUI charting: lay the chart out again after the edit (one measure a
+    // line, as 谱面整理 does), in the same undo step.
+    bool tidy = false;
     int transform = 0;
 };
 

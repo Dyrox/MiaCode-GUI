@@ -5,6 +5,8 @@
 #include "core/chart/transform/ChartBatchTransform.h"
 #include "editor/ChartTokenScan.h"
 
+#include <QRegularExpression>
+
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -197,50 +199,61 @@ QString pasteNotes(const QString& text, int caretPosition, const NoteClip& clip,
 {
     int placedCount = 0;
     int skippedCount = 0;
-    miacode::chart_selection::ChartSelectionBeatIndex index;
-    index.setText(text);
-
-    // Resolve every entry's token on the untouched text first.
-    QVector<std::pair<int, const NoteClipEntry*>> targets;
+    QString result = text;
     const int baseToken = chartTokenStartAt(text, caretPosition);
-    int token = baseToken;
-    Fraction tokenOffset;
     QVector<const NoteClipEntry*> pending;
     for (const NoteClipEntry& entry : clip) {
         pending.append(&entry);
     }
-    std::sort(pending.begin(), pending.end(), [](const NoteClipEntry* left, const NoteClipEntry* right) {
-        return compare({left->numerator, left->denominator}, {right->numerator, right->denominator}) < 0;
+    // Latest first: each write then only touches text after the earlier
+    // entries' beats and the base token.
+    std::stable_sort(pending.begin(), pending.end(), [](const NoteClipEntry* left, const NoteClipEntry* right) {
+        return compare({left->numerator, left->denominator}, {right->numerator, right->denominator}) > 0;
     });
-    int walked = 0;
     for (const NoteClipEntry* entry : pending) {
-        const Fraction wanted{entry->numerator, entry->denominator};
-        while (token >= 0 && compare(tokenOffset, wanted) < 0 && walked < kPasteTokenLimit) {
-            const int comma = miacode::simai::nextChartComma(text, token);
-            if (comma < 0) {
-                token = -1;
+        const Fraction wanted = reduced(entry->numerator, entry->denominator);
+        miacode::chart_selection::ChartSelectionBeatIndex index;
+        index.setText(result);
+        int token = baseToken;
+        Fraction tokenOffset;
+        int target = -1;
+        for (int walked = 0; walked < kPasteTokenLimit; ++walked) {
+            if (compare(tokenOffset, wanted) == 0) {
+                target = token;
                 break;
             }
-            tokenOffset = add(tokenOffset, spanBetween(index, token, comma + 1));
+            const int comma = miacode::simai::nextChartComma(result, token);
+            if (comma < 0) {
+                // Past the chart's last comma: grow it to the entry's beat.
+                const Fraction rest = reduced(wanted.numerator * tokenOffset.denominator
+                                                  - tokenOffset.numerator * wanted.denominator,
+                                              wanted.denominator * tokenOffset.denominator);
+                result = extendChartTo(result, int(rest.denominator), int(rest.numerator), &target);
+                break;
+            }
+            const Fraction step = spanBetween(index, token, comma + 1);
+            const Fraction next = add(tokenOffset, step);
+            if (compare(next, wanted) > 0) {
+                // Between two commas: split this beat so one lands there.
+                const Fraction inside = reduced(wanted.numerator * tokenOffset.denominator
+                                                    - tokenOffset.numerator * wanted.denominator,
+                                                wanted.denominator * tokenOffset.denominator);
+                const double fraction = double(inside.numerator) * step.denominator
+                    / (double(inside.denominator) * qMax<qint64>(1, step.numerator));
+                result = refineTokenAt(result, token, int(inside.denominator), fraction, &target);
+                break;
+            }
+            tokenOffset = next;
             token = comma + 1;
-            ++walked;
         }
-        if (token >= 0 && compare(tokenOffset, wanted) == 0) {
-            targets.append({token, entry});
-        } else {
-            ++skippedCount;
+        if (target >= 0 && miacode::simai::nextChartComma(result, target) < 0) {
+            // The last token may be the `E` marker's; the note goes before it.
+            result = extendChartTo(result, 0, 0, &target);
         }
-    }
-
-    // Then write from the back, so earlier token starts stay valid.
-    QString result = text;
-    std::stable_sort(targets.begin(), targets.end(), [](const auto& left, const auto& right) {
-        return left.first > right.first;
-    });
-    for (const auto& [tokenStart, entry] : targets) {
         const NoteItemInfo info = classifyNoteItem(entry->item);
-        const NoteAuthoringEditPlan plan = planNoteAuthoringEdit(
-            result, tokenStart, NoteAuthoringAction::Add, info.target, entry->item);
+        const NoteAuthoringEditPlan plan = target >= 0
+            ? planNoteAuthoringEdit(result, target, NoteAuthoringAction::Add, info.target, entry->item)
+            : NoteAuthoringEditPlan();
         if (!plan.valid) {
             ++skippedCount;
             continue;
@@ -255,6 +268,260 @@ QString pasteNotes(const QString& text, int caretPosition, const NoteClip& clip,
         *skipped = skippedCount;
     }
     return result;
+}
+
+QString noteItemAt(const QString& text, int notePosition)
+{
+    const LocatedNote note = locateNote(text, notePosition);
+    return note.valid ? note.text : QString();
+}
+
+QString replaceNoteItem(const QString& text, int notePosition, const QString& item)
+{
+    const LocatedNote note = locateNote(text, notePosition);
+    if (!note.valid || item.isEmpty()) {
+        return text;
+    }
+    QString result = text;
+    result.replace(note.start, note.end - note.start, item);
+    return result;
+}
+
+QString setNoteLength(const QString& text, int notePosition, const QString& length)
+{
+    QString item = noteItemAt(text, notePosition);
+    if (item.isEmpty() || !length.startsWith(QLatin1Char('['))) {
+        return text;
+    }
+    const int open = item.lastIndexOf(QLatin1Char('['));
+    const int close = open >= 0 ? item.indexOf(QLatin1Char(']'), open) : -1;
+    if (open >= 0 && close > open) {
+        item.replace(open, close + 1 - open, length);
+    } else {
+        item += length;
+    }
+    return replaceNoteItem(text, notePosition, item);
+}
+
+SlideParts parseSingleSlide(const QString& item)
+{
+    // lane, head marks, one shape, end lane, track marks, length.
+    static const QRegularExpression pattern(QStringLiteral(
+        "^([1-8])([^\\-\\^<>vpqszVw\\[\\]*]*)(-|\\^|<|>|v|pp|qq|p|q|s|z|w|V[1-8])([1-8])([^\\[\\]*]*)(\\[[^\\]]*\\])?$"));
+    SlideParts parts;
+    const QRegularExpressionMatch match = pattern.match(item.trimmed());
+    if (!match.hasMatch()) {
+        return parts;
+    }
+    parts.lane = match.captured(1).toInt();
+    parts.head = match.captured(2);
+    parts.symbol = match.captured(3);
+    parts.endLane = match.captured(4).toInt();
+    parts.marks = match.captured(5);
+    parts.length = match.captured(6);
+    parts.valid = true;
+    return parts;
+}
+
+QString composeSlide(const SlideParts& parts)
+{
+    return QString::number(parts.lane) + parts.head + parts.symbol + QString::number(parts.endLane)
+        + parts.marks + parts.length;
+}
+
+namespace {
+
+// Where in-place item rewrites leave each item's start, in text order.
+QVector<int> shiftedStarts(const QVector<LocatedNote>& notes, const QVector<int>& newLengths)
+{
+    QVector<int> starts;
+    int shift = 0;
+    for (int index = 0; index < notes.size(); ++index) {
+        const LocatedNote& note = notes.at(index);
+        starts.append(note.start + shift);
+        shift += newLengths.at(index) - (note.end - note.start);
+    }
+    return starts;
+}
+
+} // namespace
+
+QString toggleNoteMarks(const QString& text, const QVector<int>& notePositions, QChar mark, int* changed,
+                        QVector<int>* editedPositions)
+{
+    QString result = text;
+    const QVector<LocatedNote> ordered = locateDistinctNotes(text, notePositions);
+    QVector<int> newLengths(ordered.size());
+    int count = 0;
+    for (int index = ordered.size() - 1; index >= 0; --index) {
+        const LocatedNote& note = ordered.at(index);
+        QString item = note.text;
+        newLengths[index] = item.size();
+        if (mark == QLatin1Char('b')) {
+            item = miacode::chart_transform::toggleBreakForSelection(item);
+        } else if (mark == QLatin1Char('x')) {
+            item = miacode::chart_transform::toggleExForSelection(item);
+        } else if (mark == QLatin1Char('f')) {
+            item = miacode::chart_transform::toggleFireworkForSelection(item);
+        } else if (mark == QLatin1Char('B')) {
+            // A slide track's break mark sits ahead of its length.
+            SlideParts slide = parseSingleSlide(item);
+            if (!slide.valid) {
+                continue;
+            }
+            slide.marks = slide.marks.contains(QLatin1Char('b'))
+                ? QString(slide.marks).remove(QLatin1Char('b')) : slide.marks + QLatin1Char('b');
+            item = composeSlide(slide);
+        }
+        if (item != note.text) {
+            result.replace(note.start, note.end - note.start, item);
+            newLengths[index] = item.size();
+            ++count;
+        }
+    }
+    if (changed != nullptr) {
+        *changed = count;
+    }
+    if (editedPositions != nullptr) {
+        *editedPositions = shiftedStarts(ordered, newLengths);
+    }
+    return result;
+}
+
+namespace {
+
+// "[N:M]" as M/N of a bar; false for lengths written in seconds or BPM.
+bool lengthFraction(const QString& item, Fraction* fraction)
+{
+    static const QRegularExpression pattern(QStringLiteral("\\[(\\d+):(\\d+)\\]"));
+    const QRegularExpressionMatch match = pattern.match(item);
+    if (!match.hasMatch() || match.captured(1).toLongLong() <= 0) {
+        return false;
+    }
+    *fraction = reduced(match.captured(2).toLongLong(), match.captured(1).toLongLong());
+    return true;
+}
+
+QString scaledLengths(const QString& item, qint64 numerator, qint64 denominator)
+{
+    static const QRegularExpression pattern(QStringLiteral("\\[(\\d+):(\\d+)\\]"));
+    QString result;
+    qsizetype last = 0;
+    auto matches = pattern.globalMatch(item);
+    while (matches.hasNext()) {
+        const QRegularExpressionMatch match = matches.next();
+        const Fraction scaled = reduced(match.captured(2).toLongLong() * numerator,
+                                        match.captured(1).toLongLong() * denominator);
+        result += item.mid(last, match.capturedStart() - last)
+            + QStringLiteral("[%1:%2]").arg(scaled.denominator).arg(scaled.numerator);
+        last = match.capturedEnd();
+    }
+    return result + item.mid(last);
+}
+
+} // namespace
+
+QString holdsToTaps(const QString& text, const QVector<int>& notePositions, int division, int* changed)
+{
+    QString result = text;
+    QVector<LocatedNote> notes = locateDistinctNotes(text, notePositions);
+    std::reverse(notes.begin(), notes.end());
+    int count = 0;
+    for (const LocatedNote& note : notes) {
+        const NoteItemInfo info = classifyNoteItem(note.text);
+        Fraction length;
+        if (info.kind != NoteItemKind::Hold || !lengthFraction(note.text, &length) || division <= 0) {
+            continue;
+        }
+        // The hold's head and its marks, without the hold and its length.
+        QString tap = note.text.left(note.text.indexOf(QLatin1Char('[')) >= 0
+                                         ? note.text.indexOf(QLatin1Char('[')) : note.text.size());
+        tap.remove(QLatin1Char('h'));
+        NoteClip clip;
+        const qint64 steps = length.numerator * division / length.denominator;
+        for (qint64 step = 0; step <= steps; ++step) {
+            const Fraction offset = reduced(step, division);
+            clip.append({tap, offset.numerator, offset.denominator});
+        }
+        const ChartTextRange range = removalRange(note);
+        result.remove(range.start, range.length);
+        result = pasteNotes(result, note.tokenStart, clip);
+        ++count;
+    }
+    if (changed != nullptr) {
+        *changed = count;
+    }
+    return result;
+}
+
+QString swapSlides(const QString& text, const QVector<int>& notePositions,
+                   const std::function<QString(const QString&)>& reverseShape, int* changed,
+                   QVector<int>* editedPositions)
+{
+    QString result = text;
+    const QVector<LocatedNote> ordered = locateDistinctNotes(text, notePositions);
+    QVector<int> newLengths(ordered.size());
+    int count = 0;
+    for (int index = ordered.size() - 1; index >= 0; --index) {
+        const LocatedNote& note = ordered.at(index);
+        newLengths[index] = note.text.size();
+        const SlideParts slide = parseSingleSlide(note.text);
+        if (!slide.valid) {
+            continue;
+        }
+        const QString reversed = reverseShape(QString::number(slide.lane) + slide.symbol
+                                              + QString::number(slide.endLane));
+        if (reversed.size() < 3) {
+            continue;
+        }
+        SlideParts back = slide;
+        back.lane = slide.endLane;
+        back.endLane = slide.lane;
+        back.symbol = reversed.mid(1, reversed.size() - 2);
+        back.head = QStringLiteral("?");
+        QString item = composeSlide(back);
+        if (!slide.head.contains(QLatin1Char('?')) && !slide.head.contains(QLatin1Char('!'))) {
+            // The star stays where it was, now as a star-shaped tap.
+            QString star = QString::number(slide.lane) + slide.head;
+            if (!star.contains(QLatin1Char('$'))) {
+                star += QLatin1Char('$');
+            }
+            item = star + QLatin1Char('/') + item;
+        }
+        result.replace(note.start, note.end - note.start, item);
+        newLengths[index] = item.size();
+        ++count;
+    }
+    if (changed != nullptr) {
+        *changed = count;
+    }
+    if (editedPositions != nullptr) {
+        *editedPositions = shiftedStarts(ordered, newLengths);
+    }
+    return result;
+}
+
+QString scaleNotes(const QString& text, const QVector<int>& notePositions, int numerator, int denominator,
+                   int* changed)
+{
+    const QVector<LocatedNote> notes = locateDistinctNotes(text, notePositions);
+    if (notes.isEmpty() || numerator <= 0 || denominator <= 0) {
+        return text;
+    }
+    // Offsets and lengths both stretch from the first selected beat.
+    NoteClip clip = copyNotes(text, notePositions);
+    for (NoteClipEntry& entry : clip) {
+        const Fraction offset = reduced(entry.numerator * numerator, entry.denominator * denominator);
+        entry.numerator = offset.numerator;
+        entry.denominator = offset.denominator;
+        entry.item = scaledLengths(entry.item, numerator, denominator);
+    }
+    const int baseToken = notes.constFirst().tokenStart;
+    QString result = removeNotes(text, notePositions);
+    if (changed != nullptr) {
+        *changed = clip.size();
+    }
+    return pasteNotes(result, baseToken, clip);
 }
 
 QString rotateNoteItem(const QString& item, int laneDelta)
@@ -369,6 +636,12 @@ QString refineTokenAt(const QString& text, int tokenPosition, int division, doub
         const QChar ch = result.at(position);
         if (ch == QLatin1Char('{')) {
             ownDivision = true;
+            // A following "{finer}" now repeats the step just written.
+            const int close = result.indexOf(QLatin1Char('}'), position);
+            if (close > position && close < followingEnd
+                && result.mid(position + 1, close - position - 1).trimmed() == QString::number(finer)) {
+                result.remove(position, close + 1 - position);
+            }
             break;
         }
         if (ch != QLatin1Char('(')) {
@@ -385,6 +658,44 @@ QString refineTokenAt(const QString& text, int tokenPosition, int division, doub
         result.replace(restore.replaceStart, restore.removalLength, restore.insertionText);
     }
     *targetToken = splitComma + offset;
+    return result;
+}
+
+QString extendChartTo(const QString& text, int division, int steps, int* targetToken)
+{
+    const int lastToken = chartTokenStartAt(text, text.size());
+    *targetToken = lastToken;
+    if (steps < 0 || (division <= 0 && steps > 0)) {
+        return text;
+    }
+    QString result = text;
+    // The last `{N}` of the text is the step in effect at its end.
+    static const QRegularExpression divisionPattern(QStringLiteral("\\{\\s*(\\d+)\\s*\\}"));
+    QRegularExpressionMatch last;
+    for (auto it = divisionPattern.globalMatch(result); it.hasNext();) {
+        last = it.next();
+    }
+    if (division > 0 && (!last.hasMatch() || last.captured(1).toInt() != division)) {
+        const NoteAuthoringEditPlan control = planTokenControl(result, lastToken, QLatin1Char('{'),
+                                                               QString::number(division));
+        if (control.valid) {
+            result.replace(control.replaceStart, control.removalLength, control.insertionText);
+        }
+    }
+    // The end marker moves on past the new commas: "…,E" becomes "…,,,E",
+    // and the token before it takes the notes.
+    const ChartTokenScan token = scanChartToken(result, lastToken);
+    for (const ChartTokenItem& item : token.items) {
+        if (result.mid(item.noteStart, item.noteEnd - item.noteStart) == QLatin1String("E")) {
+            result.insert(item.noteStart, QString(steps + 1, QLatin1Char(',')));
+            *targetToken = steps == 0 ? lastToken : item.noteStart + steps;
+            return result;
+        }
+    }
+    if (steps > 0) {
+        result.append(QString(steps, QLatin1Char(',')));
+        *targetToken = result.size();
+    }
     return result;
 }
 
