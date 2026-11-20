@@ -1249,6 +1249,18 @@ Failed: %2</source>
         <source>Editor</source>
         <translation>编辑器</translation>
     </message>
+    <message id="dialog.preferences.charting_group">
+        <source>GUI Charting</source>
+        <translation>GUI 写谱</translation>
+    </message>
+    <message id="dialog.preferences.group.lane_editor">
+        <source>Lane editor</source>
+        <translation>轨道编辑器</translation>
+    </message>
+    <message id="dialog.preferences.lane_order">
+        <source>Key order</source>
+        <translation>键位排序</translation>
+    </message>
     <message id="dialog.preferences.editor_line_spacing">
         <source>Line Spacing</source>
         <translation>行距</translation>
@@ -3723,6 +3735,90 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
         <translation>写入编辑器光标所在的拍。左键添加或取消，右键删除。Hold：点起点，移动光标，再点一次。Slide：从起点按键拖到终点按键。鼠标在预览上时，←→ 写入并前进一拍，↑↓ 只移动一拍。在时间轴上：点击放置，拖动音符移动它，在空白处拖动框选；用 Hold 工具时沿同一轨拖动画 Hold。</translation>
     </message>
+    <message id="qml.charting.shape_straight">
+        <source>Straight</source>
+        <translation>直线</translation>
+    </message>
+    <message id="qml.charting.shape_short_arc">
+        <source>Short arc</source>
+        <translation>短弧</translation>
+    </message>
+    <message id="qml.charting.shape_ring">
+        <source>Along the ring</source>
+        <translation>外圈</translation>
+    </message>
+    <message id="qml.charting.shape_center">
+        <source>Through the centre</source>
+        <translation>经过中心</translation>
+    </message>
+    <message id="qml.charting.shape_around">
+        <source>Around the centre</source>
+        <translation>绕中心</translation>
+    </message>
+    <message id="qml.charting.shape_around_wide">
+        <source>Wide loop</source>
+        <translation>绕大圈</translation>
+    </message>
+    <message id="qml.charting.shape_zigzag">
+        <source>Zigzag</source>
+        <translation>闪电</translation>
+    </message>
+    <message id="qml.charting.shape_wifi">
+        <source>Wifi</source>
+        <translation>Wifi</translation>
+    </message>
+    <message id="qml.charting.shape_bend">
+        <source>Bend</source>
+        <translation>折线</translation>
+    </message>
+    <message id="qml.charting.slide_pick">
+        <source>Slide %1 → %2</source>
+        <translation>星星 %1 → %2</translation>
+    </message>
+    <message id="qml.charting.bpm_edit">
+        <source>BPM from this beat (Enter)</source>
+        <translation>从此拍起的 BPM（回车确认）</translation>
+    </message>
+    <message id="qml.charting.slide_pick_hint">
+        <source>Hover to preview, click to place. On the ring, click a key for another end or draw the shape from the star.</source>
+        <translation>悬停预览，点击放置。在圆环上点击按键可换终点，也可以从星星处直接画出形状。</translation>
+    </message>
+    <message id="qml.charting.slide_pick_next">
+        <source>Click the next end key on the ring, or draw the next segment from the star.</source>
+        <translation>在圆环上点击下一段的终点键，或从星星处画出下一段。</translation>
+    </message>
+    <message id="qml.charting.slide_pick_undo">
+        <source>Undo</source>
+        <translation>撤销</translation>
+    </message>
+    <message id="qml.charting.slide_pick_confirm">
+        <source>Done</source>
+        <translation>确定</translation>
+    </message>
+    <message id="qml.charting.slide_pick_cancel">
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message id="qml.charting.touch_pick_hint">
+        <source>Click an area to place a touch (again to remove it); right click places one and steps on.</source>
+        <translation>点击判定区放置 Touch（再点一次移除）；右键放置并前进一格。</translation>
+    </message>
+    <message id="qml.charting.placing_touch">
+        <source>Touch time picked: click areas on the preview. Esc or another column ends it.</source>
+        <translation>已选定 Touch 时间：在预览上点击判定区放置。按 Esc 或点击其他列结束。</translation>
+    </message>
+    <message id="qml.charting.picking_slide">
+        <source>Pick the slide's shape on the preview, from the list or by drawing it on the ring.</source>
+        <translation>在预览上选择星星形状：从列表点选，或在圆环上画出。</translation>
+    </message>
+    <message id="qml.charting.placing_hold">
+        <source>Hold from %1: click where it ends</source>
+        <translation>Hold 起点 %1：点击确定结尾</translation>
+    </message>
+    <message id="qml.charting.placing_slide">
+        <source>Slide from %1: click the end key and time</source>
+        <translation>星星起点 %1：点击确定终点键和时间</translation>
+    </message>
     <message id="qml.charting.grid">
         <source>Grid</source>
         <translation>分音</translation>
@@ -3780,8 +3876,8 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>缩放</translation>
     </message>
     <message id="qml.charting.panel_hint">
-        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</source>
-        <translation>按键：1–5 选择音符，0 放下；B X M S W T F 切换对应选项。滚轮按拍移动，Ctrl+滚轮缩放；在空白处拖动框选。</translation>
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</source>
+        <translation>按键：1–5 选择音符，0 放下；B X M S W T F 切换对应选项。滚轮按拍移动，Ctrl+滚轮缩放；在空白处拖动框选，拖动 Hold 尾部改长度。点击 T 列选定时间后在预览上点判定区放置 Touch；星星形状也在预览上选择或画出。选中星星工具时点击星星可重新放置。</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>
@@ -3866,6 +3962,46 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.status_selected">
         <source>%1 notes selected</source>
         <translation>已选中 %1 个音符</translation>
+    </message>
+    <message id="qml.charting.selection_edit">
+        <source>Selection</source>
+        <translation>选区</translation>
+    </message>
+    <message id="qml.charting.hold_to_taps">
+        <source>Hold → taps</source>
+        <translation>Hold转Tap</translation>
+    </message>
+    <message id="qml.charting.swap_slide">
+        <source>Reverse slide</source>
+        <translation>星星反转</translation>
+    </message>
+    <message id="qml.charting.scale_double">
+        <source>Time ×2</source>
+        <translation>时间×2</translation>
+    </message>
+    <message id="qml.charting.scale_half">
+        <source>Time ×½</source>
+        <translation>时间×½</translation>
+    </message>
+    <message id="qml.charting.paste_mode">
+        <source>Click where the copied notes start; right click or Esc cancels</source>
+        <translation>点击放置复制的音符起点；右键或 Esc 取消</translation>
+    </message>
+    <message id="qml.charting.status_slide_not_single">
+        <source>Only a slide of one segment can be re-placed</source>
+        <translation>只能重新放置单段星星</translation>
+    </message>
+    <message id="qml.charting.status_nothing_changed">
+        <source>Nothing in the selection to change</source>
+        <translation>选区中没有可修改的音符</translation>
+    </message>
+    <message id="qml.charting.status_edited">
+        <source>Changed %1 notes</source>
+        <translation>已修改 %1 个音符</translation>
+    </message>
+    <message id="qml.charting.status_moved">
+        <source>Moved %1 notes</source>
+        <translation>已移动 %1 个音符</translation>
     </message>
     <message id="qml.charting.status_no_selection">
         <source>Select notes on the timeline first by dragging over empty space</source>

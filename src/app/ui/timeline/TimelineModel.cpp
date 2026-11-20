@@ -116,12 +116,59 @@ void TimelineModel::authoringGesture(int kind, bool secondary, double second, do
                                      int lane, int endLane, bool onNote)
 {
     using Kind = miacode::TimelineAuthoringGesture::Kind;
-    if (kind < int(Kind::Click) || kind > int(Kind::Box)) {
+    // Slides carry a shape and come through authoringSlide.
+    // Slides, touches and BPM carry text and come through their own calls.
+    const bool plain = (kind >= int(Kind::Click) && kind <= int(Kind::Paste) && kind != int(Kind::Slide))
+        || kind == int(Kind::MoveSelection);
+    if (!plain) {
         return;
     }
     if (auto* current = surface(); current != nullptr) {
         current->timelineAuthoring(current->issueCommandStamp(),
                                    {Kind(kind), secondary, second, endSecond, lane, endLane, onNote});
+    }
+}
+
+void TimelineModel::authoringSlide(double second, double endSecond, int lane, int endLane, const QString& shape,
+                                   bool replace)
+{
+    if (auto* current = surface(); current != nullptr) {
+        miacode::TimelineAuthoringGesture gesture;
+        gesture.kind = miacode::TimelineAuthoringGesture::Kind::Slide;
+        gesture.second = second;
+        gesture.endSecond = endSecond;
+        gesture.lane = lane;
+        gesture.endLane = endLane;
+        gesture.shape = shape;
+        gesture.onNote = replace;
+        current->timelineAuthoring(current->issueCommandStamp(), gesture);
+    }
+}
+
+void TimelineModel::authoringTouch(double second, const QString& pad, bool add)
+{
+    if (auto* current = surface(); current != nullptr) {
+        miacode::TimelineAuthoringGesture gesture;
+        gesture.kind = miacode::TimelineAuthoringGesture::Kind::Touch;
+        gesture.secondary = add;
+        gesture.second = second;
+        gesture.endSecond = second;
+        gesture.lane = 9;
+        gesture.endLane = 9;
+        gesture.shape = pad;
+        current->timelineAuthoring(current->issueCommandStamp(), gesture);
+    }
+}
+
+void TimelineModel::authoringBpm(double second, const QString& bpm)
+{
+    if (auto* current = surface(); current != nullptr) {
+        miacode::TimelineAuthoringGesture gesture;
+        gesture.kind = miacode::TimelineAuthoringGesture::Kind::Bpm;
+        gesture.second = second;
+        gesture.endSecond = second;
+        gesture.shape = bpm.trimmed();
+        current->timelineAuthoring(current->issueCommandStamp(), gesture);
     }
 }
 

@@ -161,6 +161,31 @@ Rectangle {
             }
         }
 
+        // GUI charting picks touches on the ring; this says how.
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 8
+            z: 2
+            visible: root.noteAuthoring !== null && root.noteAuthoring.touchPicking && !root.exportPageActive
+            width: Math.min(parent.width - 16, touchHint.implicitWidth + 16)
+            height: touchHint.implicitHeight + 8
+            radius: 4
+            color: Theme.surfaceColor(Theme.colors.background.elevated)
+            opacity: 0.92
+
+            Text {
+                id: touchHint
+                anchors.centerIn: parent
+                width: Math.min(implicitWidth, parent.parent.width - 32)
+                text: qsTrId("qml.charting.touch_pick_hint")
+                color: Theme.colors.text.secondary
+                font.family: Theme.uiFont
+                font.pixelSize: Theme.uiFontSize
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
+            }
+        }
     }
 
     PreviewTransport {

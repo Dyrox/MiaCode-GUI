@@ -34,6 +34,7 @@ constexpr auto kFontSize = "ui_font_size";
 constexpr auto kUiScalePercent = "ui_scale_percent";
 constexpr auto kEditorAutoWrap = "editor_auto_wrap";
 constexpr auto kEditorScrollPastEnd = "editor_scroll_past_end";
+constexpr auto kChartingLaneOrder = "charting_lane_order";
 constexpr auto kEditorSelectionBeatDisplay = "editor_selection_beat_display";
 constexpr auto kEditorOverviewRulerEnabled = "editor_overview_ruler_enabled";
 
@@ -330,6 +331,7 @@ void WorkbenchSettings::reloadEditorSettings()
     const bool imeDisabled = editorUi.value(QStringLiteral("editor_ime_input_disabled")).toBool(true);
     const bool autoWrap = editorUi.value(QLatin1String(kEditorAutoWrap)).toBool(true);
     const bool scrollPastEnd = editorUi.value(QLatin1String(kEditorScrollPastEnd)).toBool(true);
+    const int laneOrder = qBound(0, editorUi.value(QLatin1String(kChartingLaneOrder)).toInt(1), 2);
     const bool selectionBeatDisplay =
         editorUi.value(QLatin1String(kEditorSelectionBeatDisplay)).toBool(true);
     const bool overviewRulerEnabled =
@@ -343,6 +345,7 @@ void WorkbenchSettings::reloadEditorSettings()
         && editorImeInputDisabled_ == imeDisabled
         && editorAutoWrap_ == autoWrap
         && editorScrollPastEnd_ == scrollPastEnd
+        && chartingLaneOrder_ == laneOrder
         && editorSelectionBeatDisplay_ == selectionBeatDisplay
         && editorOverviewRulerEnabled_ == overviewRulerEnabled) {
         return;
@@ -356,6 +359,7 @@ void WorkbenchSettings::reloadEditorSettings()
     editorImeInputDisabled_ = imeDisabled;
     editorAutoWrap_ = autoWrap;
     editorScrollPastEnd_ = scrollPastEnd;
+    chartingLaneOrder_ = laneOrder;
     editorSelectionBeatDisplay_ = selectionBeatDisplay;
     editorOverviewRulerEnabled_ = overviewRulerEnabled;
     emit editorSettingsChanged();
@@ -516,6 +520,15 @@ void WorkbenchSettings::setEditorAutoWrap(bool enabled)
     if (editorAutoWrap_ == enabled) return;
     editorAutoWrap_ = enabled;
     storeUiValue(kEditorAutoWrap, enabled);
+    emit editorSettingsChanged();
+}
+
+void WorkbenchSettings::setChartingLaneOrder(int order)
+{
+    order = qBound(0, order, 2);
+    if (chartingLaneOrder_ == order) return;
+    chartingLaneOrder_ = order;
+    storeUiValue(kChartingLaneOrder, order);
     emit editorSettingsChanged();
 }
 

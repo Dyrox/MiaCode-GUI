@@ -1249,6 +1249,18 @@ Failed: %2</source>
         <source>Editor</source>
         <translation>編集</translation>
     </message>
+    <message id="dialog.preferences.charting_group">
+        <source>GUI Charting</source>
+        <translation>GUI 譜面作成</translation>
+    </message>
+    <message id="dialog.preferences.group.lane_editor">
+        <source>Lane editor</source>
+        <translation>レーンエディタ</translation>
+    </message>
+    <message id="dialog.preferences.lane_order">
+        <source>Key order</source>
+        <translation>キーの並び</translation>
+    </message>
     <message id="dialog.preferences.editor_line_spacing">
         <source>Line Spacing</source>
         <translation>行間</translation>
@@ -3723,6 +3735,90 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
         <translation>エディタのカーソルがある拍に書き込みます。左クリックで追加・解除、右クリックで削除。Hold：始点をクリックし、カーソルを動かしてもう一度クリック。Slide：始点のボタンから終点のボタンまでドラッグ。プレビュー上で ←→ は書き込んで 1 拍進み、↑↓ は拍だけ移動。タイムラインでは、クリックで配置、ノーツをドラッグで移動、空白をドラッグで選択。Hold ツールでは同じレーンに沿ったドラッグで Hold。</translation>
     </message>
+    <message id="qml.charting.shape_straight">
+        <source>Straight</source>
+        <translation>直線</translation>
+    </message>
+    <message id="qml.charting.shape_short_arc">
+        <source>Short arc</source>
+        <translation>短い弧</translation>
+    </message>
+    <message id="qml.charting.shape_ring">
+        <source>Along the ring</source>
+        <translation>外周</translation>
+    </message>
+    <message id="qml.charting.shape_center">
+        <source>Through the centre</source>
+        <translation>中心経由</translation>
+    </message>
+    <message id="qml.charting.shape_around">
+        <source>Around the centre</source>
+        <translation>中心を回る</translation>
+    </message>
+    <message id="qml.charting.shape_around_wide">
+        <source>Wide loop</source>
+        <translation>大回り</translation>
+    </message>
+    <message id="qml.charting.shape_zigzag">
+        <source>Zigzag</source>
+        <translation>稲妻</translation>
+    </message>
+    <message id="qml.charting.shape_wifi">
+        <source>Wifi</source>
+        <translation>Wifi</translation>
+    </message>
+    <message id="qml.charting.shape_bend">
+        <source>Bend</source>
+        <translation>折れ線</translation>
+    </message>
+    <message id="qml.charting.slide_pick">
+        <source>Slide %1 → %2</source>
+        <translation>スライド %1 → %2</translation>
+    </message>
+    <message id="qml.charting.bpm_edit">
+        <source>BPM from this beat (Enter)</source>
+        <translation>この拍からの BPM（Enter で確定）</translation>
+    </message>
+    <message id="qml.charting.slide_pick_hint">
+        <source>Hover to preview, click to place. On the ring, click a key for another end or draw the shape from the star.</source>
+        <translation>ホバーでプレビュー、クリックで配置。リング上でキーをクリックすると終点を変更、星から形を描いても選べます。</translation>
+    </message>
+    <message id="qml.charting.slide_pick_next">
+        <source>Click the next end key on the ring, or draw the next segment from the star.</source>
+        <translation>リングで次の終点キーをクリックするか、星から次の区間を描いてください。</translation>
+    </message>
+    <message id="qml.charting.slide_pick_undo">
+        <source>Undo</source>
+        <translation>元に戻す</translation>
+    </message>
+    <message id="qml.charting.slide_pick_confirm">
+        <source>Done</source>
+        <translation>確定</translation>
+    </message>
+    <message id="qml.charting.slide_pick_cancel">
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message id="qml.charting.touch_pick_hint">
+        <source>Click an area to place a touch (again to remove it); right click places one and steps on.</source>
+        <translation>エリアをクリックでタッチを配置（もう一度で削除）、右クリックで配置して次へ進みます。</translation>
+    </message>
+    <message id="qml.charting.placing_touch">
+        <source>Touch time picked: click areas on the preview. Esc or another column ends it.</source>
+        <translation>タッチの時間を選択中：プレビューでエリアをクリックして配置。Esc か他の列で終了。</translation>
+    </message>
+    <message id="qml.charting.picking_slide">
+        <source>Pick the slide's shape on the preview, from the list or by drawing it on the ring.</source>
+        <translation>プレビューでスライドの形を選択：リストから選ぶか、リング上に描いてください。</translation>
+    </message>
+    <message id="qml.charting.placing_hold">
+        <source>Hold from %1: click where it ends</source>
+        <translation>Hold 始点 %1：終点をクリック</translation>
+    </message>
+    <message id="qml.charting.placing_slide">
+        <source>Slide from %1: click the end key and time</source>
+        <translation>スライド始点 %1：終点のキーと時間をクリック</translation>
+    </message>
     <message id="qml.charting.grid">
         <source>Grid</source>
         <translation>分割</translation>
@@ -3780,8 +3876,8 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>拡大</translation>
     </message>
     <message id="qml.charting.panel_hint">
-        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</source>
-        <translation>キー：1–5 でノーツを選び 0 で解除。B X M S W T F で各オプション切替。ホイールで拍移動、Ctrl+ホイールで拡大、空白をドラッグで選択。</translation>
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</source>
+        <translation>キー：1–5 でノーツを選び 0 で解除。B X M S W T F で各オプション切替。ホイールで拍移動、Ctrl+ホイールで拡大、空白をドラッグで選択、ホールドの終端をドラッグで長さ変更。T 列をクリックして時間を選び、プレビューでタッチを配置。スライドの形もプレビューで選ぶか描きます。スライド選択中は星をクリックで再配置。</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>
@@ -3866,6 +3962,46 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.status_selected">
         <source>%1 notes selected</source>
         <translation>%1 個のノーツを選択</translation>
+    </message>
+    <message id="qml.charting.selection_edit">
+        <source>Selection</source>
+        <translation>選択範囲</translation>
+    </message>
+    <message id="qml.charting.hold_to_taps">
+        <source>Hold → taps</source>
+        <translation>ホールド→タップ</translation>
+    </message>
+    <message id="qml.charting.swap_slide">
+        <source>Reverse slide</source>
+        <translation>スライド反転</translation>
+    </message>
+    <message id="qml.charting.scale_double">
+        <source>Time ×2</source>
+        <translation>時間×2</translation>
+    </message>
+    <message id="qml.charting.scale_half">
+        <source>Time ×½</source>
+        <translation>時間×½</translation>
+    </message>
+    <message id="qml.charting.paste_mode">
+        <source>Click where the copied notes start; right click or Esc cancels</source>
+        <translation>コピーしたノーツの開始位置をクリック。右クリックか Esc で取消</translation>
+    </message>
+    <message id="qml.charting.status_slide_not_single">
+        <source>Only a slide of one segment can be re-placed</source>
+        <translation>一区間のスライドのみ再配置できます</translation>
+    </message>
+    <message id="qml.charting.status_nothing_changed">
+        <source>Nothing in the selection to change</source>
+        <translation>選択範囲に変更できるノーツがありません</translation>
+    </message>
+    <message id="qml.charting.status_edited">
+        <source>Changed %1 notes</source>
+        <translation>%1 個のノーツを変更しました</translation>
+    </message>
+    <message id="qml.charting.status_moved">
+        <source>Moved %1 notes</source>
+        <translation>%1 個のノーツを移動しました</translation>
     </message>
     <message id="qml.charting.status_no_selection">
         <source>Select notes on the timeline first by dragging over empty space</source>

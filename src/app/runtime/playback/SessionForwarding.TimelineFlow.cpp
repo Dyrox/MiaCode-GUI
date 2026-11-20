@@ -271,7 +271,7 @@ bool Session::editorAuthoringContextActive() const
 
 int Session::noteAuthoringTool() const
 {
-    return applicationServices_.noteAuthoring().tool();
+    return applicationServices_.noteAuthoring().previewTool();
 }
 
 void Session::navigateTimelineToSecond(double second, bool focusEditor)

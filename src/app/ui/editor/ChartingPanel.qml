@@ -87,6 +87,7 @@ Rectangle {
         hoverEnabled: true
         focusPolicy: Qt.NoFocus
         onClicked: root.noteAuthoring.tool = tile.selected ? 0 : tile.toolValue
+        Accessible.name: tile.label
 
         background: Rectangle {
             color: tile.selected ? Theme.colors.state.selected
@@ -163,6 +164,7 @@ Rectangle {
         id: operation
         required property string label
         property string shortcut: ""
+        Accessible.name: operation.label
         Layout.fillWidth: true
         Layout.preferredHeight: 52
         hoverEnabled: true
@@ -174,10 +176,10 @@ Rectangle {
         }
         contentItem: Item {
             opacity: operation.enabled ? 1.0 : 0.45
+            // With a shortcut line the label sits on top; alone, centred.
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 8
+                y: operation.shortcut !== "" ? 8 : Math.round((parent.height - height) / 2)
                 text: operation.label
                 color: Theme.colors.text.primary
                 font.family: Theme.uiFont
@@ -389,7 +391,14 @@ Rectangle {
                             label: qsTrId("qml.charting.paste")
                             shortcut: root.modifierKey + "+V"
                             enabled: root.noteAuthoring.clipCount > 0
-                            onClicked: root.noteAuthoring.paste()
+                            // In the lane editor the copy follows the pointer
+                            // until a click puts it down.
+                            onClicked: {
+                                if (root.laneEditor && root.laneEditor.visible)
+                                    root.laneEditor.pasteMode = true
+                                else
+                                    root.noteAuthoring.paste()
+                            }
                         }
                         OperationButton {
                             label: qsTrId("qml.charting.delete")
@@ -439,6 +448,34 @@ Rectangle {
                     }
                 }
                 LabeledRow {
+                    label: qsTrId("qml.charting.selection_edit")
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 4
+                        columnSpacing: 4
+                        rowSpacing: 4
+                        Repeater {
+                            model: [
+                                { label: qsTrId("qml.charting.break"), operation: "b" },
+                                { label: qsTrId("qml.charting.ex"), operation: "x" },
+                                { label: qsTrId("qml.charting.firework"), operation: "f" },
+                                { label: qsTrId("qml.charting.slide_break"), operation: "B" },
+                                { label: qsTrId("qml.charting.hold_to_taps"), operation: "taps" },
+                                { label: qsTrId("qml.charting.swap_slide"), operation: "swap" },
+                                { label: qsTrId("qml.charting.scale_double"), operation: "scale:2/1" },
+                                { label: qsTrId("qml.charting.scale_half"), operation: "scale:1/2" }
+                            ]
+                            delegate: OperationButton {
+                                required property var modelData
+                                Layout.preferredHeight: 34
+                                label: modelData.label
+                                enabled: root.noteAuthoring.selectionCount > 0
+                                onClicked: root.noteAuthoring.editSelection(modelData.operation)
+                            }
+                        }
+                    }
+                }
+                LabeledRow {
                     label: qsTrId("qml.charting.beat")
                     OperationButton {
                         Layout.preferredHeight: 32
@@ -471,7 +508,17 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     visible: text !== ""
-                    text: root.noteAuthoring.pendingTarget !== ""
+                    text: root.laneEditor && root.laneEditor.pasteMode
+                          ? qsTrId("qml.charting.paste_mode")
+                          : root.laneEditor && root.laneEditor.placingKind === 1
+                          ? qsTrId("qml.charting.placing_hold").arg(root.laneEditor.placingLane)
+                          : root.laneEditor && root.laneEditor.placingKind === 4
+                          ? qsTrId("qml.charting.placing_touch")
+                          : root.laneEditor && root.laneEditor.placingKind === 3
+                          ? qsTrId("qml.charting.picking_slide")
+                          : root.laneEditor && root.laneEditor.placingKind === 2
+                          ? qsTrId("qml.charting.placing_slide").arg(root.laneEditor.placingLane)
+                          : root.noteAuthoring.pendingTarget !== ""
                           ? (root.tool === 3 ? qsTrId("qml.charting.chain_pending")
                                              : qsTrId("qml.charting.hold_pending")).arg(root.noteAuthoring.pendingTarget)
                           : root.noteAuthoring.statusMessage

@@ -225,11 +225,20 @@ Session::Session(miacode::ApplicationServices& services, QObject* parent)
             &noteAuthoring, &miacode::NoteAuthoringController::handleGesture);
     connect(&noteAuthoring, &miacode::NoteAuthoringController::toolChanged,
             this, &Session::refreshEditorAuthoringContext);
-    connect(&noteAuthoring, &miacode::NoteAuthoringController::pendingTargetChanged, this, [this] {
-        if (scene_ != nullptr) {
-            scene_->setNoteAuthoringPendingTarget(applicationServices_.noteAuthoring().pendingTarget());
+    connect(&noteAuthoring, &miacode::NoteAuthoringController::pickChanged,
+            this, &Session::refreshEditorAuthoringContext);
+    const auto pushAuthoringGuide = [this] {
+        if (scene_ == nullptr) {
+            return;
         }
-    });
+        const miacode::NoteAuthoringController& authoring = applicationServices_.noteAuthoring();
+        scene_->setNoteAuthoringPendingTarget(authoring.previewAnchor());
+        scene_->setNoteAuthoringCue(authoring.laneCue() > 0 ? QString::number(authoring.laneCue()) : QString());
+        scene_->setNoteAuthoringGuide(authoring.previewShowsTargets(), authoring.previewGuidePath(),
+                                      authoring.previewGuideArrows());
+    };
+    connect(&noteAuthoring, &miacode::NoteAuthoringController::pendingTargetChanged, this, pushAuthoringGuide);
+    connect(&noteAuthoring, &miacode::NoteAuthoringController::previewGuideChanged, this, pushAuthoringGuide);
     logStartupStage("preview_canvas_created");
     applyEffectivePreviewOutlineVariantToCanvas();
     applyPreviewSkinDirectoryToSurfaces();

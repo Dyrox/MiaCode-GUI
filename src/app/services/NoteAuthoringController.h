@@ -5,6 +5,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariantList>
+#include <QVector>
+#include <QPointF>
 
 namespace miacode {
 
@@ -43,6 +46,28 @@ class NoteAuthoringController final : public QObject
     Q_PROPERTY(int selectionCount READ selectionCount NOTIFY statusChanged)
     Q_PROPERTY(int clipCount READ clipCount NOTIFY statusChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusChanged)
+    // The copied notes as {row, bars}, for the paste preview.
+    Q_PROPERTY(QVariantList clipLayout READ clipLayout NOTIFY statusChanged)
+    // The pad the last touch went to: "C", "A1".."E8".
+    Q_PROPERTY(QString touchPad READ touchPad WRITE setTouchPad NOTIFY optionsChanged)
+    // The tool the preview offers: the panel's tool in code charting; in GUI
+    // charting only the touch and slide pickers below.
+    Q_PROPERTY(int previewTool READ previewTool NOTIFY pickChanged)
+    // GUI charting: a time is picked in the T column and preview clicks on
+    // the judgement area put touches there.
+    Q_PROPERTY(bool touchPicking READ touchPicking WRITE setTouchPicking NOTIFY pickChanged)
+    // GUI charting: the slide's head and end are clicked and its shape is
+    // picked on the preview, from the list or by drawing it.
+    Q_PROPERTY(bool slidePicking READ slidePicking NOTIFY pickChanged)
+    Q_PROPERTY(int slidePickFrom READ slidePickFrom NOTIFY pickChanged)
+    Q_PROPERTY(int slidePickEnd READ slidePickEnd NOTIFY pickChanged)
+    // The chain picked so far ("1-4q7"); empty before the first segment.
+    Q_PROPERTY(QString slidePickChain READ slidePickChain NOTIFY pickChanged)
+    // Shapes from slidePickFrom to slidePickEnd: {key, label}.
+    Q_PROPERTY(QVariantList slidePickShapes READ slidePickShapes NOTIFY pickChanged)
+    // GUI charting: the lane column under the pointer (1..8; 0 for none),
+    // marked on the preview's ring as classic editors do.
+    Q_PROPERTY(int laneCue READ laneCue WRITE setLaneCue NOTIFY previewGuideChanged)
 
 public:
     explicit NoteAuthoringController(EditorSyncController& editorSync, QObject* parent = nullptr);
@@ -79,12 +104,51 @@ public:
     int selectionCount() const { return selectionCount_; }
     int clipCount() const { return clipCount_; }
     QString statusMessage() const { return statusMessage_; }
+    QVariantList clipLayout() const { return clipLayout_; }
+    QString touchPad() const { return touchPad_; }
+    void setTouchPad(const QString& pad);
+
+    int previewTool() const;
+    bool touchPicking() const { return touchPicking_; }
+    void setTouchPicking(bool enabled);
+    bool slidePicking() const { return slidePickFrom_ > 0; }
+    int slidePickFrom() const { return slidePickFrom_; }
+    int slidePickEnd() const { return slidePickEnd_; }
+    QString slidePickChain() const { return slidePickChain_; }
+    QVariantList slidePickShapes() const;
+    // What the preview marks and draws for the pickers.
+    QString previewAnchor() const;
+    bool previewShowsTargets() const;
+    QVector<QPointF> previewGuidePath() const;
+    QVector<miacode::preview::scene::NoteAuthoringGuideArrow> previewGuideArrows() const;
+    // A touch on `pad` with the panel's marks ("A3f").
+    QString touchItem(const QString& pad) const;
+    int laneCue() const { return laneCue_; }
+    void setLaneCue(int lane);
+
+    // The slide picker, opened once the lane editor has the slide's head
+    // and end. Picking a shape finishes it; with 连锁 shapes add up into a
+    // chain until confirmSlidePick.
+    Q_INVOKABLE void beginSlidePick(int startLane, int endLane);
+    Q_INVOKABLE void setSlidePickEnd(int lane);
+    // The shape under the pointer, drawn on the preview; empty clears it.
+    Q_INVOKABLE void previewSlideShape(const QString& key);
+    Q_INVOKABLE void pickSlideShape(const QString& key);
+    // Drops the last chained segment; with none, the picker closes.
+    Q_INVOKABLE void undoSlidePick();
+    Q_INVOKABLE void confirmSlidePick();
+    Q_INVOKABLE void cancelSlidePick();
 
     void handleGesture(const miacode::preview::scene::NoteAuthoringGesture& gesture);
     // The current tool's item on a target ("3bx", "Ch[4:1]"); empty when the
     // tool cannot write there.
     QString itemForTarget(const QString& target) const;
     QString holdItemWithoutLength(const QString& target) const;
+    // A slide of shape `shapeKey` ("1>5") with the head and track marks set
+    // in the panel, and `length` ("[16:3]"; empty for the default length).
+    QString slideItemForShape(const QString& shapeKey, const QString& length) const;
+    // Shapes from one lane to another for the slide picker: {key, label}.
+    Q_INVOKABLE QVariantList slideShapes(int startLane, int endLane) const;
     // Stamps the request with the hold length and queues it for the editor.
     bool send(miacode::editor::NoteAuthoringRequest request);
     // Arrow keys over the preview: Left/Right write on `hovered` and step one
@@ -101,6 +165,10 @@ public:
     Q_INVOKABLE void setDivision(const QString& division);
     // A chart_transform::ChartTransformOp applied to the selected notes.
     Q_INVOKABLE void transformSelection(int transform);
+    // Selection edits: "b", "x", "f", "B" toggle marks, "taps" turns holds
+    // into taps on the 分音 grid, "swap" turns slides around, "scale:N/D"
+    // stretches the notes in time.
+    Q_INVOKABLE void editSelection(const QString& operation);
 
 signals:
     void toolChanged();
@@ -108,6 +176,14 @@ signals:
     void optionsChanged();
     void pendingTargetChanged();
     void statusChanged();
+    void pickChanged();
+    // What the preview should draw for the pickers changed.
+    void previewGuideChanged();
+    // A pad clicked while touchPicking; `advance` (right click) also asks
+    // for the next grid step.
+    void touchPadPicked(const QString& pad, bool advance);
+    // The slide's course ("1>5", "1-4q7"); empty when the picker was left.
+    void slidePickFinished(const QString& shape);
 
 private:
     template <typename T>
@@ -121,10 +197,15 @@ private:
     QString headModifiers() const;
     QString slideItem(int startLane, int endLane, const QVector<QPointF>& path) const;
     void handleSlideGesture(const miacode::preview::scene::NoteAuthoringGesture& gesture);
+    void handlePickGesture(const miacode::preview::scene::NoteAuthoringGesture& gesture);
+    // By value: callers pass slidePickChain_, which this clears.
+    void finishSlidePick(QString shape);
+    // The lane the next chained segment starts from.
+    int slidePickCurrentLane() const;
     bool sendSimple(miacode::editor::NoteAuthoringAction action, const QString& target,
                     const QString& item = QString());
     void setPendingTarget(const QString& target);
-    void applyStatus(int selectionCount, int clipCount, const QString& message);
+    void applyStatus(int selectionCount, int clipCount, const QString& message, const QVariantList& clipLayout);
 
     EditorSyncController& editorSync_;
     miacode::preview::scene::NoteAuthoringTool tool_ = miacode::preview::scene::NoteAuthoringTool::None;
@@ -147,6 +228,16 @@ private:
     int selectionCount_ = 0;
     int clipCount_ = 0;
     QString statusMessage_;
+    QVariantList clipLayout_;
+    QString touchPad_ = QStringLiteral("C");
+    bool touchPicking_ = false;
+    int laneCue_ = 0;
+    int slidePickFrom_ = 0;
+    int slidePickEnd_ = 0;
+    QString slidePickChain_;
+    // Segment ends of the chain, for undo.
+    QVector<int> slidePickChainLengths_;
+    QString slidePickHover_;
 };
 
 } // namespace miacode

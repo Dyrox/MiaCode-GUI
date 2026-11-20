@@ -384,6 +384,24 @@ void PreferencesModel::setEditorAutoWrap(bool enabled)
     emit editorChanged();
 }
 
+int PreferencesModel::chartingLaneOrder() const
+{
+    return settings_ != nullptr ? settings_->chartingLaneOrder() : 1;
+}
+
+void PreferencesModel::setChartingLaneOrder(int order)
+{
+    if (settings_ == nullptr || order == chartingLaneOrder()) return;
+    settings_->setChartingLaneOrder(order);
+    emit editorChanged();
+}
+
+QVariantList PreferencesModel::chartingLaneOrderOptions() const
+{
+    return {option(0, QStringLiteral("1 2 3 4 5 6 7 8")), option(1, QStringLiteral("8 7 6 5 4 3 2 1")),
+            option(2, QStringLiteral("5 6 7 8 1 2 3 4"))};
+}
+
 bool PreferencesModel::editorScrollPastEnd() const
 {
     return settings_ != nullptr && settings_->editorScrollPastEnd();

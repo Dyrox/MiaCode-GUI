@@ -53,6 +53,8 @@ public:
     Q_PROPERTY(int editorInputHandlingMode READ editorInputHandlingMode WRITE setEditorInputHandlingMode NOTIFY editorChanged)
     Q_PROPERTY(bool editorAutoWrap READ editorAutoWrap WRITE setEditorAutoWrap NOTIFY editorChanged)
     Q_PROPERTY(bool editorScrollPastEnd READ editorScrollPastEnd WRITE setEditorScrollPastEnd NOTIFY editorChanged)
+    Q_PROPERTY(int chartingLaneOrder READ chartingLaneOrder WRITE setChartingLaneOrder NOTIFY editorChanged)
+    Q_PROPERTY(QVariantList chartingLaneOrderOptions READ chartingLaneOrderOptions NOTIFY interfaceChanged)
     Q_PROPERTY(bool editorSelectionBeatDisplay READ editorSelectionBeatDisplay WRITE setEditorSelectionBeatDisplay NOTIFY editorChanged)
     Q_PROPERTY(bool editorOverviewRulerEnabled READ editorOverviewRulerEnabled WRITE setEditorOverviewRulerEnabled NOTIFY editorChanged)
 
@@ -124,6 +126,9 @@ public:
     bool editorAutoWrap() const;
     void setEditorAutoWrap(bool enabled);
     bool editorScrollPastEnd() const;
+    int chartingLaneOrder() const;
+    void setChartingLaneOrder(int order);
+    QVariantList chartingLaneOrderOptions() const;
     void setEditorScrollPastEnd(bool enabled);
     bool editorSelectionBeatDisplay() const;
     bool editorOverviewRulerEnabled() const;

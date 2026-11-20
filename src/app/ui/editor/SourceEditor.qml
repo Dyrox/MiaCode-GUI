@@ -14,6 +14,8 @@ Rectangle {
     property var preferences: null
     readonly property bool overviewRulerEnabled: preferences ? preferences.editorOverviewRulerEnabled : false
     property bool navigationVisible: false
+    // GUI charting covers the editor; it then takes no keyboard focus.
+    property bool keyboardSuspended: false
     onNavigationVisibleChanged: {
         if (!navigationVisible) {
             editorContextMenu.close()
@@ -403,6 +405,7 @@ Rectangle {
     ScintillaEditor {
         id: sourceArea
         objectName: "sourceArea"
+        keyboardSuspended: root.keyboardSuspended
         property bool reservesPlainSpace: true
         anchors.left: parent.left
         anchors.right: verticalBar.left

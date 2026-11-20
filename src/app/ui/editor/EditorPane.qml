@@ -24,6 +24,9 @@ Item {
     property var noteAuthoring: null
     property var timelineSession: null
     readonly property bool guiCharting: root.noteAuthoring !== null && root.noteAuthoring.guiMode
+    // Entering GUI charting moves the keyboard to the lanes, so Space plays
+    // instead of typing into the hidden code.
+    onGuiChartingChanged: if (root.guiCharting) laneEditor.forceActiveFocus()
 
     readonly property Item sourceEditorItem: sourceEditor
     readonly property Item difficultyFieldsItem: difficultyHeader
@@ -394,6 +397,7 @@ Item {
         anchors.bottom: parent.bottom
         visible: root.sourceVisible
         navigationVisible: root.visible && root.viewState.difficultyEditorActive
+        keyboardSuspended: root.guiCharting
         viewState: root.viewState
         documentSession: root.documentSession
         editorController: root.editorController
@@ -413,13 +417,35 @@ Item {
         visible: root.sourceVisible && root.guiCharting && root.timelineSession !== null
         stateBridge: root.timelineSession ? root.timelineSession.stateBridge : null
         noteAuthoringEnabled: visible && root.noteAuthoring.tool !== 0
-        authoringSpanEnabled: root.noteAuthoring !== null
-                              && (root.noteAuthoring.tool === 2 || root.noteAuthoring.tool === 5)
+        // Holds and slides go down click by click, as in classic editors.
+        placementMode: !root.noteAuthoring ? 0
+                       : (root.noteAuthoring.tool === 2 || root.noteAuthoring.tool === 5) ? 1
+                       : root.noteAuthoring.tool === 3 ? 2 : 0
         onAuthoringGesture: (kind, secondary, second, endSecond, lane, endLane, onNote) =>
             root.timelineSession.authoringGesture(kind, secondary, second, endSecond, lane, endLane, onNote)
         onAuthoringDeleteRequested: root.noteAuthoring.deleteSelection()
         onNavigateRequested: second => root.timelineSession.headerNavigate(second)
+        onAuthoringSlide: (second, endSecond, lane, endLane, shape, replace) =>
+            root.timelineSession.authoringSlide(second, endSecond, lane, endLane, shape, replace)
+        // Pasting shows the copied notes under the pointer until a click.
+        pasteLayout: root.noteAuthoring ? root.noteAuthoring.clipLayout : []
+        // The slide's shape is picked on the preview, from a list or drawn
+        // there (classic editors open a shape ring here too).
+        onSlideShapeRequested: (startLane, endLane, point) => root.noteAuthoring.beginSlidePick(startLane, endLane)
+        onBpmEditRequested: (second, bpm, point) => {
+            bpmPopup.second = second
+            bpmField.text = Number(bpm.toFixed(3)).toString()
+            const position = laneEditor.mapToItem(root, point)
+            bpmPopup.x = Math.max(8, Math.min(position.x - bpmPopup.width - 8, root.width - bpmPopup.width - 8))
+            bpmPopup.y = Math.max(8, Math.min(position.y - bpmPopup.height / 2, root.height - bpmPopup.height - 8))
+            bpmPopup.open()
+        }
+        onPlacementChanged: {
+            if (laneEditor.placingKind !== 3)
+                root.noteAuthoring.cancelSlidePick()
+        }
         gridDivision: root.noteAuthoring ? root.noteAuthoring.gridDivision : 0
+        laneOrder: root.preferences ? root.preferences.chartingLaneOrder : 1
         // Number keys pick the note kind and letters toggle its marks; with
         // the command key, the note operations.
         function shortcutFor(event) {
@@ -429,6 +455,9 @@ Item {
             const toggles = { [Qt.Key_B]: "breakNote", [Qt.Key_X]: "exNote", [Qt.Key_M]: "pseudoEach",
                               [Qt.Key_S]: "slideBreak", [Qt.Key_W]: "wifi", [Qt.Key_T]: "slideChain",
                               [Qt.Key_F]: "firework" }
+            // Enter takes the slide chain picked on the preview.
+            if (plain && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && root.noteAuthoring.slidePicking)
+                return () => root.noteAuthoring.confirmSlidePick()
             if (plain && event.key >= Qt.Key_0 && event.key <= Qt.Key_5)
                 return () => root.noteAuthoring.tool = event.key - Qt.Key_0
             if (plain && toggles[event.key] !== undefined)
@@ -438,7 +467,7 @@ Item {
             switch (event.key) {
             case Qt.Key_C: return shift ? null : () => root.noteAuthoring.copySelection()
             case Qt.Key_X: return shift ? null : () => root.noteAuthoring.cutSelection()
-            case Qt.Key_V: return shift ? null : () => root.noteAuthoring.paste()
+            case Qt.Key_V: return shift ? null : () => laneEditor.pasteMode = root.noteAuthoring.clipCount > 0
             case Qt.Key_F: return () => root.noteAuthoring.transformSelection(shift ? 1 : 0)
             case Qt.Key_R: return () => root.noteAuthoring.transformSelection(shift ? 3 : 4)
             }
@@ -460,6 +489,38 @@ Item {
                 if (root.noteAuthoring.selectionCount === 0)
                     laneEditor.clearAuthoringSelection()
             }
+            function onSlidePickFinished(shape) {
+                if (shape !== "")
+                    laneEditor.commitSlide(shape)
+                else
+                    laneEditor.cancelPlacement()
+            }
+            // A pad clicked on the preview for the time picked in T.
+            function onTouchPadPicked(pad, advance) {
+                if (laneEditor.placingKind !== 4)
+                    return
+                if (root.noteAuthoring.tool === 5) {
+                    laneEditor.beginTouchHold()
+                    return
+                }
+                root.timelineSession.authoringTouch(laneEditor.placingSecond, pad, advance)
+                if (advance)
+                    laneEditor.advanceTouchTime()
+            }
+        }
+        Binding {
+            target: root.noteAuthoring
+            property: "laneCue"
+            value: laneEditor.visible && laneEditor.hoveredLane <= 8 ? laneEditor.hoveredLane : 0
+            when: root.noteAuthoring !== null
+            restoreMode: Binding.RestoreValue
+        }
+        Binding {
+            target: root.noteAuthoring
+            property: "touchPicking"
+            value: laneEditor.visible && laneEditor.placingKind === 4
+            when: root.noteAuthoring !== null
+            restoreMode: Binding.RestoreValue
         }
     }
 
@@ -474,11 +535,64 @@ Item {
         laneEditor: laneEditor
     }
 
-    // 代码 / GUI: how this difficulty is charted. In GUI mode it sits over the
-    // lanes' corner so the panel keeps its header.
+    // A BPM change at the beat clicked in the lane editor's BPM column.
+    Popup {
+        id: bpmPopup
+        property double second: 0
+        width: 168
+        padding: 8
+        modal: false
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        onOpened: {
+            bpmField.forceActiveFocus()
+            bpmField.selectAll()
+        }
+        background: Rectangle {
+            radius: 6
+            color: Theme.surfaceColor(Theme.colors.background.elevated)
+            border.color: Theme.colors.accent.focus
+            border.width: 1
+        }
+        contentItem: ColumnLayout {
+            spacing: 4
+            Text {
+                Layout.fillWidth: true
+                text: qsTrId("qml.charting.bpm_edit")
+                color: Theme.colors.text.primary
+                font.family: Theme.uiFont
+                font.pixelSize: Theme.uiFontSize
+            }
+            AppTextField {
+                id: bpmField
+                Layout.fillWidth: true
+                horizontalAlignment: TextInput.AlignHCenter
+                validator: DoubleValidator { bottom: 1; top: 10000; decimals: 3 }
+                onAccepted: {
+                    root.timelineSession.authoringBpm(bpmPopup.second, text)
+                    bpmPopup.close()
+                }
+            }
+        }
+    }
+
+    // The slide shape list sits over the panel while the ring on the preview
+    // takes clicks and strokes.
+    SlideShapePicker {
+        anchors.top: chartingPanel.top
+        anchors.right: chartingPanel.right
+        anchors.topMargin: 40
+        anchors.rightMargin: 12
+        z: 3
+        width: Math.min(260, chartingPanel.width - 24)
+        visible: chartingPanel.visible && root.noteAuthoring !== null && root.noteAuthoring.slidePicking
+        noteAuthoring: root.noteAuthoring
+    }
+
+    // 代码 / GUI: how this difficulty is charted. The same corner in both
+    // modes; in GUI mode that is the free end of the panel's header bar.
     Row {
         anchors.top: sourceEditor.top
-        anchors.right: root.guiCharting ? laneEditor.right : sourceEditor.right
+        anchors.right: sourceEditor.right
         anchors.topMargin: 6
         anchors.rightMargin: 18
         z: 2

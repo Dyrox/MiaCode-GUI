@@ -112,9 +112,9 @@ AppDialog {
     readonly property int settingsRowHeight: Theme.controlMinHeight + 10
     readonly property int settingsLabelWidth: root.width < 650 ? 120 : 140
     readonly property int sectionSpacing: 2 * Theme.settingsRowSpacing
-    readonly property var pageIds: ["interface", "editor", "background", "performance", "shortcuts", "about"]
+    readonly property var pageIds: ["interface", "editor", "charting", "background", "performance", "shortcuts", "about"]
     readonly property var pageTitles: [
-        qsTrId("qml.interface"), qsTrId("dialog.preferences.editor_group"),
+        qsTrId("qml.interface"), qsTrId("dialog.preferences.editor_group"), qsTrId("dialog.preferences.charting_group"),
         qsTrId("dialog.preferences.background_group"), qsTrId("dialog.preferences.performance_group"),
         qsTrId("dialog.preferences.shortcuts_group"),
         qsTrId("action.about")
@@ -633,6 +633,23 @@ AppDialog {
                                 checked: root.preferencesModel.editorOverviewRulerEnabled
                                 onToggled: root.preferencesModel.editorOverviewRulerEnabled = checked
                             }
+                        }
+                    }
+                }
+
+                // GUI charting.
+                PreferencePage {
+                    objectName: "preferencesChartingPage"
+                    PreferenceGroup {
+                        title: qsTrId("dialog.preferences.group.lane_editor")
+                        first: true
+
+                        PreferenceCombo {
+                            objectName: "preferencesLaneOrderCombo"
+                            label: qsTrId("dialog.preferences.lane_order")
+                            options: root.preferencesModel.chartingLaneOrderOptions
+                            currentValue: root.preferencesModel.chartingLaneOrder
+                            onPicked: function(value) { root.preferencesModel.chartingLaneOrder = value }
                         }
                     }
                 }

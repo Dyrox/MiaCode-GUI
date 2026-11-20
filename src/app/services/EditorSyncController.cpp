@@ -79,9 +79,10 @@ bool EditorSyncController::requestTouchPadAuthoring(
     return true;
 }
 
-void EditorSyncController::publishNoteAuthoringStatus(int selectionCount, int clipCount, const QString& message)
+void EditorSyncController::publishNoteAuthoringStatus(int selectionCount, int clipCount, const QString& message,
+                                                      const QVariantList& clipLayout)
 {
-    emit noteAuthoringStatusPublished(selectionCount, clipCount, message);
+    emit noteAuthoringStatusPublished(selectionCount, clipCount, message, clipLayout);
 }
 
 bool EditorSyncController::requestNoteAuthoring(const miacode::editor::NoteAuthoringRequest& noteRequest)

@@ -29,6 +29,22 @@ struct TimelineAuthoringGesture {
         // Box selection over [second, endSecond] x [lane, endLane]; with
         // endLane -1, `lane` is a bit mask of lanes (bit n = lane n).
         Box,
+        // A slide of `shape` with its head at (second, lane) that reaches
+        // endLane at endSecond, after the star's one-beat wait. With onNote
+        // it replaces the course of the slide already there.
+        Slide,
+        // The hold at (second, lane) with its tail dragged to endSecond.
+        Resize,
+        // Paste the copied notes from `second` on.
+        Paste,
+        // A touch on pad `shape` at `second`. secondary always adds instead
+        // of toggling.
+        Touch,
+        // `(shape)` as the BPM from `second` on.
+        Bpm,
+        // The selected notes moved together: the earliest from `second` to
+        // `endSecond`, all of them by endLane - lane lanes.
+        MoveSelection,
     };
     Kind kind = Kind::Click;
     bool secondary = false;
@@ -38,6 +54,7 @@ struct TimelineAuthoringGesture {
     int endLane = 0;
     // The press hit a note drawn at (second, lane).
     bool onNote = false;
+    QString shape;
 };
 
 class TimelineSurface

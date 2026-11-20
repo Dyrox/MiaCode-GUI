@@ -26,6 +26,9 @@ class ScintillaEditorBridge : public ScintillaQuick_item
     Q_PROPERTY(miacode::EditorSyncController* syncController READ syncController WRITE setSyncController NOTIFY bindingsChanged)
     Q_PROPERTY(AnalysisModel* analysisSession READ analysisSession WRITE setAnalysisSession NOTIFY bindingsChanged)
     Q_PROPERTY(bool navigationVisible READ navigationVisible WRITE setNavigationVisible NOTIFY bindingsChanged)
+    // GUI charting covers the editor: it keeps applying edits but takes no
+    // keyboard focus or input, so keys such as Space reach the workbench.
+    Q_PROPERTY(bool keyboardSuspended READ keyboardSuspended WRITE setKeyboardSuspended NOTIFY bindingsChanged)
     // The hosting QML surface owns the theme fill, including wallpaper opacity.
     Q_PROPERTY(QColor sceneBackgroundColor READ sceneBackgroundColor CONSTANT)
     Q_PROPERTY(QVariantMap editorColors READ editorColors WRITE setEditorColors NOTIFY editorColorsChanged)
@@ -67,6 +70,8 @@ public:
     void setSyncController(miacode::EditorSyncController* value);
     void setAnalysisSession(AnalysisModel* value);
     bool navigationVisible() const { return navigationVisible_; }
+    bool keyboardSuspended() const { return keyboardSuspended_; }
+    void setKeyboardSuspended(bool suspended);
     void setNavigationVisible(bool value);
     QVariantMap editorColors() const { return palette_; }
     void setEditorColors(const QVariantMap& value);
@@ -179,7 +184,9 @@ private:
     void touchAuthoring(const QString& pad, QChar separator, int difficulty, qulonglong revision, int anchor, int position);
     void noteAuthoring(const miacode::editor::NoteAuthoringRequest& request, int difficulty, qulonglong revision,
                        int anchor, int position);
-    void applyAuthoring(const miacode::editor::SimaiTextEditResult& result);
+    // `followEdit`: move the preview to the edited beat (and back there on
+    // undo), as caret-based authoring does.
+    void applyAuthoring(miacode::editor::SimaiTextEditResult result, bool followEdit = true);
     void publishAuthoringStatus(const QString& message);
     void beginUserInteraction();
     void publishTouchUndoAnchor();
@@ -255,6 +262,12 @@ private:
         int tokenStart = -1;
     };
     HoldAnchor holdAnchor_;
+    // Set while a GUI charting request is applied: its edit is laid out
+    // again with the chart's 谱面整理 options.
+    bool tidyAuthoring_ = false;
+    bool keyboardSuspended_ = false;
+    // forceActiveFocus() unless GUI charting covers the editor.
+    void takeFocus();
     // Notes picked on the timeline, as (column, line) in the text at `revision`.
     struct NoteSelection {
         QString scope;

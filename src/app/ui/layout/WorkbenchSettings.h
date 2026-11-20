@@ -55,6 +55,9 @@ class WorkbenchSettings final : public QObject
     Q_PROPERTY(bool editorImeInputDisabled READ editorImeInputDisabled NOTIFY editorSettingsChanged)
     Q_PROPERTY(bool editorAutoWrap READ editorAutoWrap WRITE setEditorAutoWrap NOTIFY editorSettingsChanged)
     Q_PROPERTY(bool editorScrollPastEnd READ editorScrollPastEnd WRITE setEditorScrollPastEnd NOTIFY editorSettingsChanged)
+    // GUI charting lane columns, left to right: 0 is 1..8, 1 is 8..1, 2 is
+    // 5678 1234 (classic editors offer the same three).
+    Q_PROPERTY(int chartingLaneOrder READ chartingLaneOrder WRITE setChartingLaneOrder NOTIFY editorSettingsChanged)
     Q_PROPERTY(bool editorSelectionBeatDisplay READ editorSelectionBeatDisplay WRITE setEditorSelectionBeatDisplay NOTIFY editorSettingsChanged)
     Q_PROPERTY(bool editorOverviewRulerEnabled READ editorOverviewRulerEnabled WRITE setEditorOverviewRulerEnabled NOTIFY editorSettingsChanged)
 
@@ -106,6 +109,8 @@ public:
     bool editorAutoWrap() const;
     void setEditorAutoWrap(bool enabled);
     bool editorScrollPastEnd() const;
+    int chartingLaneOrder() const { return chartingLaneOrder_; }
+    void setChartingLaneOrder(int order);
     bool editorSelectionBeatDisplay() const;
     bool editorOverviewRulerEnabled() const;
 
@@ -182,6 +187,7 @@ private:
     bool editorImeInputDisabled_ = true;
     bool editorAutoWrap_ = true;
     bool editorScrollPastEnd_ = true;
+    int chartingLaneOrder_ = 1;
     bool editorSelectionBeatDisplay_ = true;
     bool editorOverviewRulerEnabled_ = false;
     bool darkTheme_ = true;

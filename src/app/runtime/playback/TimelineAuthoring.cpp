@@ -5,6 +5,7 @@
 #include "timeline/TimelineGrid.h"
 
 #include <cmath>
+#include <limits>
 #include <numeric>
 
 namespace {
@@ -20,6 +21,8 @@ constexpr int kTouchRow = 9;
 constexpr double kNoteMatchToleranceSeconds = 0.02;
 // Grid points closer than this to a beat start land on that beat.
 constexpr double kGridMatchSeconds = 0.002;
+// A bar at the default 120 BPM, for a chart with no measures yet.
+constexpr double kDefaultBarSeconds = 2.0;
 
 // "[N:k]" reduced, counted in whole beats where it can be: [4:2], not [2:1].
 QString gridLength(int division, int steps)
@@ -36,12 +39,13 @@ QString gridLength(int division, int steps)
     return QStringLiteral("[%1:%2]").arg(denominator).arg(numerator);
 }
 
-QString targetForRow(int lane)
+// Touches go to the pad last picked on the preview.
+QString targetForRow(int lane, const QString& touchPad)
 {
     if (lane >= 1 && lane <= 8) {
         return QString::number(lane);
     }
-    return lane == kTouchRow ? QStringLiteral("C") : QString();
+    return lane == kTouchRow ? touchPad : QString();
 }
 
 } // namespace
@@ -63,14 +67,37 @@ void miacode::runtime::PlaybackCoordinator::handleTimelineAuthoring(
         return model.resolveNearestCursorAnchorForSecond(second, line, column, nullptr);
     };
     // Where a press at `second` writes: snapped to the 分音 grid, onto a beat
-    // that exists or between two (the editor then splits that beat).
+    // that exists or between two (the editor then splits that beat). Past
+    // the chart's last token the editor first adds commas up to it.
     const int division = authoring.gridDivision();
-    const auto placeAt = [&](double second, int* line, int* column, int* gridDivision, double* fraction) {
+    const auto placeAt = [&](double second, int* line, int* column, int* gridDivision, double* fraction,
+                             bool extend = true) {
         *gridDivision = 0;
+        const TimelineRenderSnapshot& snapshot = model.snapshot();
+        if (extend) {
+            // 谱面 (division 0) grows the chart by beats.
+            const int extendDivision = division > 0 ? division : 4;
+            double step = miacode::timeline::gridStepSecondsAt(snapshot, second, extendDivision);
+            if (step <= 0.0) {
+                step = kDefaultBarSeconds / extendDivision;
+            }
+            int lastLine = 1;
+            int lastColumn = 1;
+            double lastSecond = snapshot.measureLineSeconds.isEmpty() ? 0.0 : snapshot.measureLineSeconds.constFirst();
+            const bool hasToken = model.resolveNearestCursorAnchorForSecond(
+                std::numeric_limits<double>::max(), &lastLine, &lastColumn, &lastSecond);
+            if (!hasToken || second - lastSecond > step * 0.5) {
+                *line = lastLine;
+                *column = lastColumn;
+                request.extendDivision = extendDivision;
+                request.extendSteps = qMax(0, int(std::lround((second - lastSecond) / step)));
+                return true;
+            }
+        }
         if (division <= 0) {
             return tokenAt(second, line, column);
         }
-        const double snapped = miacode::timeline::snapSecondToGrid(model.snapshot(), second, division);
+        const double snapped = miacode::timeline::snapSecondToGrid(snapshot, second, division);
         double start = 0.0;
         double end = 0.0;
         if (!model.resolveCursorSpanForSecond(snapped, line, column, &start, &end)) {
@@ -99,13 +126,26 @@ void miacode::runtime::PlaybackCoordinator::handleTimelineAuthoring(
             int column = 0;
             if (gesture.onNote && noteAt(gesture.second, gesture.lane, &line, &column)) {
                 request.action = NoteAuthoringAction::Remove;
-                request.target = targetForRow(gesture.lane);
+                request.target = targetForRow(gesture.lane, authoring.touchPad());
                 request.notes = {QPoint(column, line)};
                 authoring.send(request);
             }
             return;
         }
-        const QString target = targetForRow(gesture.lane);
+        if (gesture.onNote && gesture.lane == kTouchRow) {
+            // Touches on other pads share the column: a click takes away the
+            // one under the pointer rather than toggling the picked pad.
+            int line = 0;
+            int column = 0;
+            if (noteAt(gesture.second, gesture.lane, &line, &column)) {
+                request.action = NoteAuthoringAction::Remove;
+                request.target = QStringLiteral("-");
+                request.notes = {QPoint(column, line)};
+                authoring.send(request);
+            }
+            return;
+        }
+        const QString target = targetForRow(gesture.lane, authoring.touchPad());
         const QString item = authoring.itemForTarget(target);
         if (item.isEmpty()) {
             return;
@@ -128,7 +168,7 @@ void miacode::runtime::PlaybackCoordinator::handleTimelineAuthoring(
         // A drag along one row writes a hold that spans it.
         const bool holdTool = (tool == NoteAuthoringTool::Hold && gesture.lane <= 8)
             || (tool == NoteAuthoringTool::TouchHold && gesture.lane == kTouchRow);
-        const QString target = targetForRow(gesture.lane);
+        const QString target = targetForRow(gesture.lane, authoring.touchPad());
         if (!holdTool || target.isEmpty()) {
             return;
         }
@@ -160,15 +200,105 @@ void miacode::runtime::PlaybackCoordinator::handleTimelineAuthoring(
         }
         if (!noteAt(gesture.second, gesture.lane, &request.line, &request.column)
             || !placeAt(gesture.endSecond, &request.targetLine, &request.targetColumn,
-                        &request.gridDivision, &request.tokenFraction)) {
+                        &request.gridDivision, &request.tokenFraction, false)) {
             return;
         }
         request.action = NoteAuthoringAction::Move;
-        request.target = targetForRow(gesture.lane);
+        request.target = QStringLiteral("-");
         request.laneDelta = laneRows ? gesture.endLane - gesture.lane : 0;
         authoring.send(request);
         return;
     }
+    case TimelineAuthoringGesture::Kind::Slide: {
+        if (gesture.lane < 1 || gesture.lane > 8 || gesture.shape.isEmpty()
+            || !placeAt(gesture.second, &request.line, &request.column, &request.gridDivision,
+                        &request.tokenFraction)) {
+            return;
+        }
+        // The star leaves one beat after its head; the length covers the
+        // move from there to the end the user clicked.
+        const TimelineRenderSnapshot& snapshot = model.snapshot();
+        const double head = gesture.onNote ? gesture.second
+            : division > 0 ? miacode::timeline::snapSecondToGrid(snapshot, gesture.second, division) : gesture.second;
+        const double beat = miacode::timeline::gridStepSecondsAt(snapshot, head, 4);
+        const int lengthDivision = division > 0 ? division : 16;
+        const double step = miacode::timeline::gridStepSecondsAt(snapshot, head, lengthDivision);
+        const int steps = step > 0.0 ? int(std::lround((gesture.endSecond - head - beat) / step)) : 0;
+        request.action = NoteAuthoringAction::Add;
+        request.target = QString::number(gesture.lane);
+        request.item = authoring.slideItemForShape(gesture.shape, steps > 0 ? gridLength(lengthDivision, steps) : QString());
+        if (gesture.onNote) {
+            // Re-editing: the slide whose star sits at the head.
+            if (!noteAt(gesture.second, gesture.lane, &request.line, &request.column)) {
+                return;
+            }
+            request.action = NoteAuthoringAction::EditSlide;
+            request.gridDivision = 0;
+        }
+        authoring.send(request);
+        return;
+    }
+    case TimelineAuthoringGesture::Kind::Resize: {
+        // A hold's tail dragged along its lane: the length becomes the grid
+        // steps from head to the new tail, at least one.
+        if (!noteAt(gesture.second, gesture.lane, &request.line, &request.column)) {
+            return;
+        }
+        const int lengthDivision = division > 0 ? division : 16;
+        const double step = miacode::timeline::gridStepSecondsAt(model.snapshot(), gesture.second, lengthDivision);
+        if (step <= 0.0) {
+            return;
+        }
+        const int steps = qMax(1, int(std::lround((gesture.endSecond - gesture.second) / step)));
+        request.action = NoteAuthoringAction::SetLength;
+        request.target = QStringLiteral("-");
+        request.item = gridLength(lengthDivision, steps);
+        authoring.send(request);
+        return;
+    }
+    case TimelineAuthoringGesture::Kind::Paste:
+        if (!placeAt(gesture.second, &request.line, &request.column, &request.gridDivision,
+                     &request.tokenFraction)) {
+            return;
+        }
+        request.action = NoteAuthoringAction::Paste;
+        request.target = QStringLiteral("-");
+        authoring.send(request);
+        return;
+    case TimelineAuthoringGesture::Kind::Touch:
+        // Picked on the preview for the time chosen in the T column.
+        if (gesture.shape.isEmpty()
+            || !placeAt(gesture.second, &request.line, &request.column, &request.gridDivision,
+                        &request.tokenFraction)) {
+            return;
+        }
+        request.action = gesture.secondary ? NoteAuthoringAction::Add : NoteAuthoringAction::Toggle;
+        request.target = gesture.shape;
+        request.item = authoring.touchItem(gesture.shape);
+        authoring.send(request);
+        return;
+    case TimelineAuthoringGesture::Kind::MoveSelection:
+        if (!placeAt(gesture.endSecond, &request.line, &request.column, &request.gridDivision,
+                     &request.tokenFraction)) {
+            return;
+        }
+        request.action = NoteAuthoringAction::MoveSelection;
+        request.target = QStringLiteral("-");
+        request.laneDelta = gesture.lane <= 8 && gesture.endLane <= 8 ? gesture.endLane - gesture.lane : 0;
+        authoring.send(request);
+        return;
+    case TimelineAuthoringGesture::Kind::Bpm:
+        // `(BPM)` written at the grid point, from the BPM column.
+        if (gesture.shape.isEmpty()
+            || !placeAt(gesture.second, &request.line, &request.column, &request.gridDivision,
+                        &request.tokenFraction)) {
+            return;
+        }
+        request.action = NoteAuthoringAction::SetBpm;
+        request.target = QStringLiteral("-");
+        request.item = gesture.shape;
+        authoring.send(request);
+        return;
     case TimelineAuthoringGesture::Kind::Box:
         request.action = NoteAuthoringAction::SelectNotes;
         request.target = QStringLiteral("-");

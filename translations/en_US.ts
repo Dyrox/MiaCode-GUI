@@ -1249,6 +1249,18 @@ Failed: %2</translation>
         <source>Editor</source>
         <translation>Editor</translation>
     </message>
+    <message id="dialog.preferences.charting_group">
+        <source>GUI Charting</source>
+        <translation>GUI Charting</translation>
+    </message>
+    <message id="dialog.preferences.group.lane_editor">
+        <source>Lane editor</source>
+        <translation>Lane editor</translation>
+    </message>
+    <message id="dialog.preferences.lane_order">
+        <source>Key order</source>
+        <translation>Key order</translation>
+    </message>
     <message id="dialog.preferences.editor_line_spacing">
         <source>Line Spacing</source>
         <translation>Line Spacing</translation>
@@ -3723,6 +3735,90 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
         <translation>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</translation>
     </message>
+    <message id="qml.charting.shape_straight">
+        <source>Straight</source>
+        <translation>Straight</translation>
+    </message>
+    <message id="qml.charting.shape_short_arc">
+        <source>Short arc</source>
+        <translation>Short arc</translation>
+    </message>
+    <message id="qml.charting.shape_ring">
+        <source>Along the ring</source>
+        <translation>Along the ring</translation>
+    </message>
+    <message id="qml.charting.shape_center">
+        <source>Through the centre</source>
+        <translation>Through the centre</translation>
+    </message>
+    <message id="qml.charting.shape_around">
+        <source>Around the centre</source>
+        <translation>Around the centre</translation>
+    </message>
+    <message id="qml.charting.shape_around_wide">
+        <source>Wide loop</source>
+        <translation>Wide loop</translation>
+    </message>
+    <message id="qml.charting.shape_zigzag">
+        <source>Zigzag</source>
+        <translation>Zigzag</translation>
+    </message>
+    <message id="qml.charting.shape_wifi">
+        <source>Wifi</source>
+        <translation>Wifi</translation>
+    </message>
+    <message id="qml.charting.shape_bend">
+        <source>Bend</source>
+        <translation>Bend</translation>
+    </message>
+    <message id="qml.charting.slide_pick">
+        <source>Slide %1 → %2</source>
+        <translation>Slide %1 → %2</translation>
+    </message>
+    <message id="qml.charting.bpm_edit">
+        <source>BPM from this beat (Enter)</source>
+        <translation>BPM from this beat (Enter)</translation>
+    </message>
+    <message id="qml.charting.slide_pick_hint">
+        <source>Hover to preview, click to place. On the ring, click a key for another end or draw the shape from the star.</source>
+        <translation>Hover to preview, click to place. On the ring, click a key for another end or draw the shape from the star.</translation>
+    </message>
+    <message id="qml.charting.slide_pick_next">
+        <source>Click the next end key on the ring, or draw the next segment from the star.</source>
+        <translation>Click the next end key on the ring, or draw the next segment from the star.</translation>
+    </message>
+    <message id="qml.charting.slide_pick_undo">
+        <source>Undo</source>
+        <translation>Undo</translation>
+    </message>
+    <message id="qml.charting.slide_pick_confirm">
+        <source>Done</source>
+        <translation>Done</translation>
+    </message>
+    <message id="qml.charting.slide_pick_cancel">
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+    <message id="qml.charting.touch_pick_hint">
+        <source>Click an area to place a touch (again to remove it); right click places one and steps on.</source>
+        <translation>Click an area to place a touch (again to remove it); right click places one and steps on.</translation>
+    </message>
+    <message id="qml.charting.placing_touch">
+        <source>Touch time picked: click areas on the preview. Esc or another column ends it.</source>
+        <translation>Touch time picked: click areas on the preview. Esc or another column ends it.</translation>
+    </message>
+    <message id="qml.charting.picking_slide">
+        <source>Pick the slide's shape on the preview, from the list or by drawing it on the ring.</source>
+        <translation>Pick the slide's shape on the preview, from the list or by drawing it on the ring.</translation>
+    </message>
+    <message id="qml.charting.placing_hold">
+        <source>Hold from %1: click where it ends</source>
+        <translation>Hold from %1: click where it ends</translation>
+    </message>
+    <message id="qml.charting.placing_slide">
+        <source>Slide from %1: click the end key and time</source>
+        <translation>Slide from %1: click the end key and time</translation>
+    </message>
     <message id="qml.charting.grid">
         <source>Grid</source>
         <translation>Grid</translation>
@@ -3780,8 +3876,8 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>Zoom</translation>
     </message>
     <message id="qml.charting.panel_hint">
-        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</source>
-        <translation>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</translation>
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</source>
+        <translation>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>
@@ -3866,6 +3962,46 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.status_selected">
         <source>%1 notes selected</source>
         <translation>%1 notes selected</translation>
+    </message>
+    <message id="qml.charting.selection_edit">
+        <source>Selection</source>
+        <translation>Selection</translation>
+    </message>
+    <message id="qml.charting.hold_to_taps">
+        <source>Hold → taps</source>
+        <translation>Hold → taps</translation>
+    </message>
+    <message id="qml.charting.swap_slide">
+        <source>Reverse slide</source>
+        <translation>Reverse slide</translation>
+    </message>
+    <message id="qml.charting.scale_double">
+        <source>Time ×2</source>
+        <translation>Time ×2</translation>
+    </message>
+    <message id="qml.charting.scale_half">
+        <source>Time ×½</source>
+        <translation>Time ×½</translation>
+    </message>
+    <message id="qml.charting.paste_mode">
+        <source>Click where the copied notes start; right click or Esc cancels</source>
+        <translation>Click where the copied notes start; right click or Esc cancels</translation>
+    </message>
+    <message id="qml.charting.status_slide_not_single">
+        <source>Only a slide of one segment can be re-placed</source>
+        <translation>Only a slide of one segment can be re-placed</translation>
+    </message>
+    <message id="qml.charting.status_nothing_changed">
+        <source>Nothing in the selection to change</source>
+        <translation>Nothing in the selection to change</translation>
+    </message>
+    <message id="qml.charting.status_edited">
+        <source>Changed %1 notes</source>
+        <translation>Changed %1 notes</translation>
+    </message>
+    <message id="qml.charting.status_moved">
+        <source>Moved %1 notes</source>
+        <translation>Moved %1 notes</translation>
     </message>
     <message id="qml.charting.status_no_selection">
         <source>Select notes on the timeline first by dragging over empty space</source>

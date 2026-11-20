@@ -297,6 +297,15 @@ Item {
         root.hostWindow.close()
     }
 
+    // The lane editor shows what the timeline shows, so GUI charting gives
+    // its space to the editor; code charting brings the saved choice back.
+    Connections {
+        target: root.noteAuthoring
+        function onGuiModeChanged() {
+            state.bottomPanelVisible = root.noteAuthoring.guiMode ? false : root.preferences.bottomPanelVisible
+        }
+    }
+
     Component.onCompleted: {
         state.sidebarVisible = root.preferences.sidebarVisible
         state.bottomPanelVisible = root.preferences.bottomPanelVisible
@@ -384,7 +393,10 @@ Item {
                 onToggleSidebarRequested: root.toggleSidebar()
                 onToggleBottomRequested: {
                     state.bottomPanelVisible = !state.bottomPanelVisible
-                    root.preferences.bottomPanelVisible = state.bottomPanelVisible
+                    // GUI charting hides the panel on its own; opening it
+                    // there is for the moment, not a new preference.
+                    if (!root.noteAuthoring || !root.noteAuthoring.guiMode)
+                        root.preferences.bottomPanelVisible = state.bottomPanelVisible
                 }
                 onUndoRequested: root.undo()
                 onRedoRequested: root.redo()

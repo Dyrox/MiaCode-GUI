@@ -71,6 +71,12 @@ public:
     // TimelineQuickItem::authoringGesture, forwarded with a command stamp.
     Q_INVOKABLE void authoringGesture(int kind, bool secondary, double second, double endSecond,
                                       int lane, int endLane, bool onNote);
+    Q_INVOKABLE void authoringSlide(double second, double endSecond, int lane, int endLane,
+                                    const QString& shape, bool replace = false);
+    // A touch on `pad` at `second`; `add` never takes one away.
+    Q_INVOKABLE void authoringTouch(double second, const QString& pad, bool add);
+    // A BPM change written at `second`.
+    Q_INVOKABLE void authoringBpm(double second, const QString& bpm);
 
 signals:
     void tabsChanged();
