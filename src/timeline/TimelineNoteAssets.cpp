@@ -148,16 +148,56 @@ TimelineNoteAssetSet loadTimelineNoteAssets(const QString& skinDirectory)
         return canvas;
     };
 
-    const auto buildTouchHoldCompositeIcon =
-        [&buildCenteredCompositeIcon](const QPixmap& borderBase, const QPixmap& holdBodyBase, const QPixmap& pointBase) {
-            if (borderBase.isNull() || holdBodyBase.isNull()) {
+    // Touch-hold icon in its in-game closed pose: the four coloured fans
+    // (touchhold_0..3) at the diagonals around the touch point, as
+    // PreviewTouchHoldLayerState lays them out, offset by
+    // kTouchHoldClosedOffset(8)/kTouchAssetScale(0.5) = 16 native px.
+    const auto buildTouchHoldFanIcon = [&loadRawIcon](const QStringList& fanPatterns, const QStringList& pointFiles) {
+        QPixmap fans[4];
+        for (int index = 0; index < 4; ++index) {
+            QStringList files;
+            for (const QString& pattern : fanPatterns) {
+                files.append(pattern.arg(index));
+            }
+            fans[index] = loadRawIcon(files);
+            if (fans[index].isNull()) {
                 return QPixmap();
             }
-            if (pointBase.isNull()) {
-                return buildCenteredCompositeIcon({&borderBase, &holdBodyBase});
-            }
-            return buildCenteredCompositeIcon({&borderBase, &holdBodyBase, &pointBase});
+        }
+        const QPixmap point = loadRawIcon(pointFiles);
+        constexpr qreal kFanOffset = 16.0 + 4.0;  // closed pose plus a small gap
+        const struct {
+            qreal dx;
+            qreal dy;
+            int angle;
+        } layout[] = {
+            {kFanOffset, -kFanOffset, -135},  // fan 0: upper right
+            {kFanOffset, kFanOffset, -45},    // fan 1: lower right
+            {-kFanOffset, kFanOffset, 45},    // fan 2: lower left
+            {-kFanOffset, -kFanOffset, 135},  // fan 3: upper left
         };
+        const qreal reach = kFanOffset * 1.4142 + qMax(fans[0].width(), fans[0].height()) / 2.0;
+        const int side = qMax(1, qRound(2.0 * reach));
+        QPixmap canvas(side, side);
+        canvas.fill(Qt::transparent);
+        QPainter painter(&canvas);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+        const QPointF center(side / 2.0, side / 2.0);
+        // Fan 0 in front, as in the preview.
+        for (int index = 3; index >= 0; --index) {
+            painter.save();
+            painter.translate(center.x() + layout[index].dx, center.y() + layout[index].dy);
+            painter.rotate(layout[index].angle);
+            painter.drawPixmap(QPointF(-fans[index].width() / 2.0, -fans[index].height() / 2.0), fans[index]);
+            painter.restore();
+        }
+        if (!point.isNull()) {
+            painter.drawPixmap(QPointF(center.x() - point.width() / 2.0, center.y() - point.height() / 2.0), point);
+        }
+        painter.end();
+        return canvas;
+    };
 
     const auto buildOverlayCompositeIcon =
         [&buildCenteredCompositeIcon](const QPixmap& base, const QPixmap& overlay) {
@@ -255,10 +295,8 @@ TimelineNoteAssetSet loadTimelineNoteAssets(const QString& skinDirectory)
         loadIcon("touch_break", {"touch_break.png", "touch.png", "touch_each.png", "each.png", "tap.png"}, kNoteSize + 3);
     }
 
-    const QPixmap touchHoldComposite = buildTouchHoldCompositeIcon(
-        loadRawIcon({"touchhold_border.png", "touch_border_2.png", "touch.png", "tap.png"}),
-        loadRawIcon({"touchhold_1.png", "tap.png"}),
-        loadRawIcon({"touch_point.png", "tap.png"}));
+    const QPixmap touchHoldComposite = buildTouchHoldFanIcon(
+        {"touchhold_%1.png"}, {"touch_point.png"});
     if (!touchHoldComposite.isNull()) {
         putIcon("touch_hold", touchHoldComposite, kNoteSize + 3);
     }
@@ -268,19 +306,16 @@ TimelineNoteAssetSet loadTimelineNoteAssets(const QString& skinDirectory)
         putIcon("touch_hold_border_only", touchHoldBorderOnly, kNoteSize + 3);
         putIcon("touch_hold_border_only_each", touchHoldBorderOnly, kNoteSize + 3);
     }
-    const QPixmap touchHoldEachComposite = buildTouchHoldCompositeIcon(
-        loadRawIcon({"touchhold_border.png", "touch_border_2.png", "touch.png", "tap.png"}),
-        loadRawIcon({"touchhold_1.png", "tap.png"}),
-        loadRawIcon({"touch_point_each.png", "touch_point.png", "tap.png"}));
+    const QPixmap touchHoldEachComposite = buildTouchHoldFanIcon(
+        {"touchhold_%1.png"}, {"touch_point_each.png", "touch_point.png"});
     if (!touchHoldEachComposite.isNull()) {
         putIcon("touch_hold_each", touchHoldEachComposite, kNoteSize + 3);
     } else if (!touchHoldComposite.isNull()) {
         putIcon("touch_hold_each", touchHoldComposite, kNoteSize + 3);
     }
-    const QPixmap touchHoldBreakComposite = buildTouchHoldCompositeIcon(
-        loadRawIcon({"touchhold_break_border.png", "touchhold_border_break.png", "touchhold_border.png", "touch_break.png", "touch_border_2.png", "touch.png", "tap.png"}),
-        loadRawIcon({"touchhold_break_1.png", "touchhold_1_break.png", "touchhold_1.png", "tap.png"}),
-        loadRawIcon({"touch_break_point.png", "touch_point_break.png", "touch_point.png", "tap.png"}));
+    const QPixmap touchHoldBreakComposite = buildTouchHoldFanIcon(
+        {"touchhold_break_%1.png", "touchhold_%1_break.png", "touchhold_%1.png"},
+        {"touch_break_point.png", "touch_point_break.png", "touch_point.png"});
     if (!touchHoldBreakComposite.isNull()) {
         putIcon("touch_hold_break", touchHoldBreakComposite, kNoteSize + 3);
     } else if (!touchHoldComposite.isNull()) {
@@ -303,10 +338,8 @@ TimelineNoteAssetSet loadTimelineNoteAssets(const QString& skinDirectory)
     } else if (!touchComposite.isNull()) {
         putIcon("touch_mine", touchComposite, kNoteSize + 3);
     }
-    const QPixmap touchHoldMineComposite = buildTouchHoldCompositeIcon(
-        loadRawIcon({"touchhold_border_mine.png", "touchhold_border.png", "touch.png", "tap.png"}),
-        loadRawIcon({"touchhold_1_mine.png", "touchhold_1.png", "tap.png"}),
-        loadRawIcon({"touch_point_mine.png", "touch_point.png", "tap.png"}));
+    const QPixmap touchHoldMineComposite = buildTouchHoldFanIcon(
+        {"touchhold_%1_mine.png", "touchhold_%1.png"}, {"touch_point_mine.png", "touch_point.png"});
     if (!touchHoldMineComposite.isNull()) {
         putIcon("touch_hold_mine", touchHoldMineComposite, kNoteSize + 3);
     } else if (!touchHoldComposite.isNull()) {

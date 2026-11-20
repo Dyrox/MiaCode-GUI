@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/scene/NoteAuthoringGeometry.h"
+
 #include <QImage>
 #include <QRectF>
 #include <QVector>
@@ -273,6 +275,14 @@ struct PreviewFrameState {
     QString pressedAuthoringTarget;
     QString pendingAuthoringTarget;
     QVector<QPointF> authoringPath;
+    // GUI charting pickers: every target drawn faintly, and the course of
+    // the slide shape under consideration.
+    bool authoringShowTargets = false;
+    QVector<QPointF> authoringGuidePath;
+    // The same course as the skin's slide arrows, drawn over the dots.
+    QVector<NoteAuthoringGuideArrow> authoringGuideArrows;
+    // The lane hovered in the GUI lane editor, marked on the ring ("1".."8").
+    QString authoringCueTarget;
     double playheadSeconds = 0.0;
     // Optional HUD-only override. When finite, the HUD timestamp/stats use
     // this value instead of `playheadSeconds`; the scene graph and note

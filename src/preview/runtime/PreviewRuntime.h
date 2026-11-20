@@ -201,6 +201,9 @@ public:
     void setNoteAuthoringTool(int tool);
     int noteAuthoringTool() const { return frameState_.noteAuthoringTool; }
     void setNoteAuthoringPendingTarget(const QString& target);
+    void setNoteAuthoringCue(const QString& target);
+    void setNoteAuthoringGuide(bool showTargets, const QVector<QPointF>& guidePath,
+                               const QVector<miacode::preview::scene::NoteAuthoringGuideArrow>& guideArrows);
     void hoverNoteAuthoring(const QPointF& logicalPoint);
     void clearNoteAuthoringHover();
     QString noteAuthoringHoverTarget() const { return frameState_.hoveredAuthoringTarget; }

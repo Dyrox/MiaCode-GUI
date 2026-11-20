@@ -906,6 +906,28 @@ void PreviewRuntime::setNoteAuthoringPendingTarget(const QString& target)
     update();
 }
 
+void PreviewRuntime::setNoteAuthoringCue(const QString& target)
+{
+    if (frameState_.authoringCueTarget == target) {
+        return;
+    }
+    frameState_.authoringCueTarget = target;
+    update();
+}
+
+void PreviewRuntime::setNoteAuthoringGuide(bool showTargets, const QVector<QPointF>& guidePath,
+                                           const QVector<miacode::preview::scene::NoteAuthoringGuideArrow>& guideArrows)
+{
+    if (frameState_.authoringShowTargets == showTargets && frameState_.authoringGuidePath == guidePath
+        && frameState_.authoringGuideArrows == guideArrows) {
+        return;
+    }
+    frameState_.authoringShowTargets = showTargets;
+    frameState_.authoringGuidePath = guidePath;
+    frameState_.authoringGuideArrows = guideArrows;
+    update();
+}
+
 void PreviewRuntime::hoverNoteAuthoring(const QPointF& logicalPoint)
 {
     const QString target = miacode::preview::scene::noteAuthoringTargetAtLogicalPoint(
