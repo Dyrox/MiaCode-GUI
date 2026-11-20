@@ -43,6 +43,9 @@ class TimelineLaneEditorItem : public QQuickPaintedItem
     // under the pointer while pasteMode is on; a click pastes there.
     Q_PROPERTY(QVariantList pasteLayout MEMBER pasteLayout_ NOTIFY appearanceChanged)
     Q_PROPERTY(bool pasteMode READ pasteMode WRITE setPasteMode NOTIFY placementChanged)
+    // Skin icon of the note a click would place ("tap_break", "hold", ...),
+    // drawn faintly under the pointer; empty draws none.
+    Q_PROPERTY(QString pointerIcon MEMBER pointerIcon_ NOTIFY appearanceChanged)
     // Lane columns left to right: 0 is 1..8, 1 is 8..1, 2 is 5678 1234.
     Q_PROPERTY(int laneOrder READ laneOrder WRITE setLaneOrder NOTIFY appearanceChanged)
     // The lane column under the pointer (1..8, 9 for T), 0 for none.
@@ -145,6 +148,8 @@ private:
         Box,
         // A hold's tail dragged to a new length.
         ResizeHold,
+        // A slide's end dragged to a new time or end key.
+        ResizeSlide,
     };
 
     qreal gutterWidth() const;
@@ -167,6 +172,8 @@ private:
     double adjacentBeat(double second, int direction) const;
     bool hitNote(const QPointF& point, double* second, int* lane, int* kind = nullptr) const;
     bool hitHoldTail(const QPointF& point, double* second, int* lane) const;
+    // The end of a slide at `point`: its head and the second its star sets off.
+    bool hitSlideTail(const QPointF& point, double* second, int* lane, double* startSecond, int* endLane) const;
     void paintPasteGhost(QPainter* painter, qreal radius) const;
     void finishPress(const QPointF& point);
     // Selects the box from the press to the release and reports it.
@@ -176,6 +183,8 @@ private:
     // Seek continuously; a burst of trackpad events builds on its own last
     // target instead of a playhead that has not caught up yet.
     void scrollTo(double second);
+    // ←/→: the playhead to the previous or next beat.
+    void stepBeat(int direction);
     // Zoom by `factor`, keeping the time under `y` where it is.
     void zoomAround(qreal y, double factor);
     double earliestSelectedSecond() const;
@@ -200,6 +209,7 @@ private:
     int gridDivision_ = 16;
     int hoveredLane_ = 0;
     int laneOrder_ = 1;
+    QString pointerIcon_;
     QElapsedTimer scrollClock_;
     double scrollTarget_ = 0.0;
     // Smart zoom's way back.
@@ -235,6 +245,11 @@ private:
     double pressRawSecond_ = 0.0;
     int pressLane_ = 0;
     bool pressOnNote_ = false;
+    // Option held at the press: a selection drag copies instead of moving.
+    bool pressCopies_ = false;
+    // The slide whose end is dragged: when its star sets off, and its end key.
+    double slideStartSecond_ = 0.0;
+    int slideEndLane_ = 0;
     int pressNoteKind_ = 0;
     bool selectionValid_ = false;
     double selectionStartSecond_ = 0.0;

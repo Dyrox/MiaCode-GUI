@@ -669,6 +669,19 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
             paintNote(painter, note, radius);
         }
     }
+    // The note a click would place, faintly under the pointer.
+    if (noteAuthoringEnabled_ && !pointerIcon_.isEmpty() && drag_ == Drag::None && placing_ == Placing::None
+        && !pasteMode_ && hoveredLane_ >= 1 && hoveredLane_ <= 8 && hoverPoint_.x() >= 0.0) {
+        const QPixmap icon = skinIcon(pointerIcon_, radius * 2.4);
+        if (!icon.isNull()) {
+            const QPointF center(xForLane(hoveredLane_), yForSecond(snappedSecond(secondForY(hoverPoint_.y()))));
+            const QSizeF size = icon.deviceIndependentSize();
+            painter->save();
+            painter->setOpacity(0.45);
+            painter->drawPixmap(center - QPointF(size.width() / 2.0, size.height() / 2.0), icon);
+            painter->restore();
+        }
+    }
     // Selected notes carry a ring, the selection's only mark once made.
     if (selectionValid_) {
         painter->setBrush(Qt::NoBrush);
@@ -726,6 +739,17 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
         painter->setBrush(fill);
         painter->drawRect(box);
     }
+    if (drag_ == Drag::ResizeSlide) {
+        // The slide's course from its start mark to where its end would go.
+        const int lane = laneAtX(currentPoint_.x());
+        const QPointF start(xForLane(pressLane_), yForSecond(slideStartSecond_));
+        const QPointF end(xForLane(lane >= 1 && lane <= 8 ? lane : slideEndLane_),
+                          yForSecond(qMax(snappedSecond(secondForY(currentPoint_.y())), slideStartSecond_)));
+        painter->setPen(QPen(kAccentColor, 2.0, Qt::DashLine));
+        painter->drawLine(start, end);
+        painter->setBrush(Qt::NoBrush);
+        painter->drawPolygon(starPolygon(end, radius * 0.9));
+    }
     if (drag_ == Drag::ResizeHold) {
         const double tail = qMax(snappedSecond(secondForY(currentPoint_.y())), pressSecond_);
         const qreal x = xForLane(pressLane_);
@@ -737,7 +761,43 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
                                         yForSecond(pressSecond_) - yForSecond(tail) + radius * 1.2),
                                  radius * 0.8, radius * 0.8);
     }
-    if (drag_ == Drag::MoveNote || drag_ == Drag::Place) {
+    const bool movingSelection = drag_ == Drag::MoveNote && inSelection(pressSecond_, pressLane_)
+        && (currentPoint_ - pressPoint_).manhattanLength() > kDragThreshold;
+    if (movingSelection) {
+        // The whole selection where the drop puts it: the same time shift
+        // and lane rotation as the move itself.
+        const double target = snappedSecond(pressSecond_ + (secondForY(currentPoint_.y()) - pressRawSecond_));
+        const double shift = target - pressSecond_;
+        const int releaseLane = qMax(1, laneAtX(qBound(gutterWidth(), currentPoint_.x(), lanesRight() - 1.0)));
+        const int laneDelta = pressLane_ <= 8 && releaseLane <= 8 ? releaseLane - pressLane_ : 0;
+        const auto moved = [&](int lane) { return lane <= 8 ? ((lane - 1 + laneDelta) % 8 + 8) % 8 + 1 : lane; };
+        QColor fill = kAccentColor;
+        fill.setAlpha(70);
+        painter->setPen(QPen(kAccentColor, 1.5, Qt::DashLine));
+        for (const VisibleNote& note : notes) {
+            if (!inSelection(note.second, note.lane)) {
+                continue;
+            }
+            const QPointF head(xForLane(moved(note.lane)), yForSecond(note.second + shift));
+            const qreal duration = secondForY(note.tail.y()) - note.second;
+            const auto kind = TimelineRenderNoteKind(note.kind);
+            painter->setBrush(Qt::NoBrush);
+            if (kind == TimelineRenderNoteKind::Hold || kind == TimelineRenderNoteKind::TouchHold) {
+                const qreal top = yForSecond(note.second + shift + duration);
+                painter->drawRoundedRect(QRectF(head.x() - radius * 0.8, top - radius * 0.6, radius * 1.6,
+                                                head.y() - top + radius * 1.2), radius * 0.8, radius * 0.8);
+            } else if (kind == TimelineRenderNoteKind::Slide || kind == TimelineRenderNoteKind::Wifi) {
+                const double startShift = secondForY(note.start.y()) - note.second;
+                const QPointF start(head.x(), yForSecond(note.second + shift + startShift));
+                const QPointF tail(xForLane(moved(note.endLane)), yForSecond(note.second + shift + duration));
+                painter->drawLine(start, tail);
+            }
+            painter->setBrush(fill);
+            painter->drawEllipse(head, radius, radius);
+        }
+        painter->setBrush(Qt::NoBrush);
+    }
+    if ((drag_ == Drag::MoveNote && !movingSelection) || drag_ == Drag::Place) {
         const int lane = laneAtX(currentPoint_.x());
         if (lane > 0) {
             const qreal grab = drag_ == Drag::MoveNote ? yForSecond(pressSecond_) - pressPoint_.y() : 0.0;
@@ -1052,6 +1112,27 @@ void TimelineLaneEditorItem::paintPlacement(QPainter* painter, qreal radius) con
     painter->drawPolygon(starPolygon(head, radius * 1.2));
 }
 
+bool TimelineLaneEditorItem::hitSlideTail(const QPointF& point, double* second, int* lane, double* startSecond,
+                                          int* endLane) const
+{
+    const qreal reach = qMax<qreal>(8.0, qBound<qreal>(6.0, columnWidth() * 0.32, 14.0) * 1.1);
+    for (const VisibleNote& note : visibleNotes()) {
+        const auto kind = TimelineRenderNoteKind(note.kind);
+        if (kind != TimelineRenderNoteKind::Slide && kind != TimelineRenderNoteKind::Wifi) {
+            continue;
+        }
+        const QPointF offset = point - note.tail;
+        if (qAbs(offset.x()) <= reach && qAbs(offset.y()) <= reach) {
+            *second = note.second;
+            *lane = note.lane;
+            *startSecond = secondForY(note.start.y());
+            *endLane = note.endLane;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool TimelineLaneEditorItem::hitHoldTail(const QPointF& point, double* second, int* lane) const
 {
     const int pointLane = laneAtX(point.x());
@@ -1097,7 +1178,7 @@ bool TimelineLaneEditorItem::hitNote(const QPointF& point, double* second, int* 
 void TimelineLaneEditorItem::hoverMoveEvent(QHoverEvent* event)
 {
     hoverPoint_ = event->position();
-    if (placing_ != Placing::None || pasteMode_) {
+    if (placing_ != Placing::None || pasteMode_ || !pointerIcon_.isEmpty()) {
         update();
     }
     const int lane = event->position().y() < lanesBottom() ? laneAtX(event->position().x()) : 0;
@@ -1167,6 +1248,24 @@ void TimelineLaneEditorItem::mousePressEvent(QMouseEvent* event)
     }
     pressNoteKind_ = 0;
     pressOnNote_ = hitNote(event->position(), &noteSecond, &noteLane, &pressNoteKind_);
+    // A slide's end star (where no note head is): drag it to retime the
+    // slide or to give it another end key.
+    int slideEnd = 0;
+    double slideStart = 0.0;
+    if (!pressOnNote_ && event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier
+        && placing_ == Placing::None && hitSlideTail(event->position(), &noteSecond, &noteLane, &slideStart, &slideEnd)) {
+        button_ = Qt::LeftButton;
+        drag_ = Drag::ResizeSlide;
+        pressPoint_ = event->position();
+        currentPoint_ = event->position();
+        pressSecond_ = noteSecond;
+        pressLane_ = noteLane;
+        slideStartSecond_ = slideStart;
+        slideEndLane_ = slideEnd;
+        update();
+        event->accept();
+        return;
+    }
     // The T column picks times for touches; anywhere else ends the pick.
     const bool touchColumn = lane == kTouchLane;
     if (placing_ == Placing::TouchTime && !touchColumn) {
@@ -1181,6 +1280,7 @@ void TimelineLaneEditorItem::mousePressEvent(QMouseEvent* event)
         return;
     }
     button_ = event->button();
+    pressCopies_ = event->modifiers().testFlag(Qt::AltModifier);
     pressPoint_ = event->position();
     currentPoint_ = event->position();
     pressRawSecond_ = secondForY(event->position().y());
@@ -1297,6 +1397,33 @@ void TimelineLaneEditorItem::finishPress(const QPointF& point)
     const int releaseLane = qMax(1, laneAtX(qBound(gutterWidth(), point.x(), lanesRight() - 1.0)));
 
     switch (drag) {
+    case Drag::ResizeSlide: {
+        if (!moved) {
+            break;
+        }
+        const int endLane = laneAtX(point.x());
+        const double step = stateBridge_ != nullptr
+            ? miacode::timeline::gridStepSecondsAt(stateBridge_->renderSnapshot(), slideStartSecond_,
+                                                   gridDivision_ > 0 ? gridDivision_ : 16)
+            : 0.0;
+        const double end = qMax(snappedSecond(releaseSecond), slideStartSecond_ + step);
+        if (endLane < 1 || endLane > 8 || endLane == slideEndLane_) {
+            // Same key: only the length changes, counted from the star's start.
+            emit authoringGesture(5, false, pressSecond_, pressSecond_ + (end - slideStartSecond_), pressLane_,
+                                  pressLane_, true);
+        } else {
+            // Another key: pick the new course, as when re-placing the slide.
+            placing_ = Placing::SlideShape;
+            placeReplaces_ = true;
+            placeLane_ = pressLane_;
+            placeSecond_ = pressSecond_;
+            placeEndLane_ = endLane;
+            placeEndSecond_ = end;
+            emit placementChanged();
+            emit slideShapeRequested(placeLane_, placeEndLane_, point);
+        }
+        break;
+    }
     case Drag::ResizeHold:
         if (moved) {
             emit authoringGesture(5, false, pressSecond_, qMax(snappedSecond(releaseSecond), pressSecond_),
@@ -1316,7 +1443,8 @@ void TimelineLaneEditorItem::finishPress(const QPointF& point)
             const double target = snappedSecond(pressSecond_ + (releaseSecond - pressRawSecond_));
             const double earliest = earliestSelectedSecond();
             if (earliest < std::numeric_limits<double>::max()) {
-                emit authoringGesture(9, false, earliest, earliest + (target - pressSecond_), pressLane_,
+                // `secondary` asks for a copy (Option held).
+                emit authoringGesture(9, pressCopies_, earliest, earliest + (target - pressSecond_), pressLane_,
                                       releaseLane, true);
             }
             selectionValid_ = false;
@@ -1369,6 +1497,22 @@ void TimelineLaneEditorItem::scrollTo(double second)
     scrollTarget_ = qMax(0.0, second);
     scrollClock_.restart();
     emit navigateRequested(scrollTarget_);
+}
+
+void TimelineLaneEditorItem::stepBeat(int direction)
+{
+    const bool burst = scrollClock_.isValid() && scrollClock_.elapsed() < 150;
+    const double now = burst ? scrollTarget_ : playheadSecond();
+    const double target = adjacentBeat(now, direction);
+    if (target == now) {
+        return;
+    }
+    // A picked touch time rides along with the playhead.
+    if (placing_ == Placing::TouchTime) {
+        placeSecond_ = target;
+        emit placementChanged();
+    }
+    scrollTo(target);
 }
 
 void TimelineLaneEditorItem::zoomAround(qreal y, double factor)
@@ -1443,22 +1587,14 @@ void TimelineLaneEditorItem::wheelEvent(QWheelEvent* event)
         return;
     }
     // Scrolling up moves forward in time, one beat per notch.
-    const double now = playheadSecond();
-    const double target = adjacentBeat(now, delta > 0 ? 1 : -1);
-    if (target != now) {
-        // A picked touch time rides along with the playhead.
-        if (placing_ == Placing::TouchTime) {
-            placeSecond_ = target;
-            emit placementChanged();
-        }
-        emit navigateRequested(target);
-    }
+    stepBeat(delta > 0 ? 1 : -1);
     event->accept();
 }
 
 void TimelineLaneEditorItem::keyPressEvent(QKeyEvent* event)
 {
-    if (event->modifiers() != Qt::NoModifier) {
+    // macOS reports the arrow keys with the keypad modifier.
+    if ((event->modifiers() & ~Qt::KeypadModifier) != Qt::NoModifier) {
         event->ignore();
         return;
     }
@@ -1471,6 +1607,11 @@ void TimelineLaneEditorItem::keyPressEvent(QKeyEvent* event)
         setPasteMode(false);
         cancelPlacement();
         clearAuthoringSelection();
+        break;
+    case Qt::Key_Left:
+    case Qt::Key_Right:
+        // The previous or next beat, as the wheel steps.
+        stepBeat(event->key() == Qt::Key_Right ? 1 : -1);
         break;
     default:
         event->ignore();
