@@ -27,10 +27,21 @@ QString removeNotes(const QString& text, const QVector<int>& notePositions, int*
 // Entries that fall between two commas there are skipped.
 QString pasteNotes(const QString& text, int caretPosition, const NoteClip& clip,
                    int* placed = nullptr, int* skipped = nullptr);
+// With a grid division the destination is split as refineTokenAt does.
 QString moveNote(const QString& text, int notePosition, int targetTokenPosition, int laneDelta,
-                 bool* moved = nullptr);
+                 bool* moved = nullptr, int division = 0, double fraction = 0.0);
 // Rotates every lane and pad of one item by `laneDelta` lanes clockwise.
 QString rotateNoteItem(const QString& item, int laneDelta);
+// Applies a chart_transform::ChartTransformOp to each note in place.
+QString transformNotes(const QString& text, const QVector<int>& notePositions, int transform,
+                       int* changed = nullptr);
+
+// Splits the comma step of the token at `tokenPosition` into a grid fine
+// enough for 1/division and returns the text with a comma at `fraction` of
+// that step. The token is rewritten under `{m}` and the old `{n}` restored
+// after it. `*targetToken` gets the start of the token at that point.
+QString refineTokenAt(const QString& text, int tokenPosition, int division, double fraction,
+                      int* targetToken);
 
 // Adds `fragment` (shape and end lane, e.g. "q3") to the last slide from
 // `headTarget` in the caret token, ahead of its length.

@@ -715,6 +715,7 @@ set(MIACODE_UI_QML_FILES
     src/app/ui/pet/PetOverlay.qml
     src/app/ui/pet/model/Fox.qml
     src/app/ui/latency/LatencyPage.qml
+    src/app/ui/editor/ChartingPanel.qml
     src/app/ui/editor/FindReplaceBar.qml
     src/app/ui/editor/BookmarkList.qml
     src/app/ui/timeline/BottomPanel.qml

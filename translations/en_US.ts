@@ -3696,12 +3696,12 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>EX</translation>
     </message>
     <message id="qml.charting.star">
-        <source>Star</source>
-        <translation>Star</translation>
+        <source>Star tap</source>
+        <translation>Star tap</translation>
     </message>
     <message id="qml.charting.wifi">
-        <source>Wifi</source>
-        <translation>Wifi</translation>
+        <source>Wifi slide</source>
+        <translation>Wifi slide</translation>
     </message>
     <message id="qml.charting.firework">
         <source>Firework</source>
@@ -3722,6 +3722,66 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.hint">
         <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
         <translation>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</translation>
+    </message>
+    <message id="qml.charting.grid">
+        <source>Grid</source>
+        <translation>Grid</translation>
+    </message>
+    <message id="qml.charting.grid_chart">
+        <source>Chart</source>
+        <translation>Chart</translation>
+    </message>
+    <message id="qml.charting.type">
+        <source>Type</source>
+        <translation>Type</translation>
+    </message>
+    <message id="qml.charting.pseudo_each">
+        <source>Pseudo each</source>
+        <translation>Pseudo each</translation>
+    </message>
+    <message id="qml.charting.edit">
+        <source>Edit</source>
+        <translation>Edit</translation>
+    </message>
+    <message id="qml.charting.operate">
+        <source>Transform</source>
+        <translation>Transform</translation>
+    </message>
+    <message id="qml.charting.beat">
+        <source>Beat</source>
+        <translation>Beat</translation>
+    </message>
+    <message id="qml.charting.panel_tap">
+        <source>Tap</source>
+        <translation>Tap</translation>
+    </message>
+    <message id="qml.charting.panel_touch">
+        <source>Touch</source>
+        <translation>Touch</translation>
+    </message>
+    <message id="qml.charting.panel_operations">
+        <source>Notes</source>
+        <translation>Notes</translation>
+    </message>
+    <message id="qml.charting.panel_editor">
+        <source>Editor settings</source>
+        <translation>Editor settings</translation>
+    </message>
+    <message id="qml.charting.slide_head">
+        <source>Head</source>
+        <translation>Head</translation>
+    </message>
+    <message id="qml.charting.hold_length_short">
+        <source>Length</source>
+        <translation>Length</translation>
+    </message>
+    <message id="qml.charting.zoom">
+        <source>Zoom</source>
+        <translation>Zoom</translation>
+    </message>
+    <message id="qml.charting.panel_hint">
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</source>
+        <translation>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>
@@ -3752,12 +3812,12 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>No head !</translation>
     </message>
     <message id="qml.charting.slide_break">
-        <source>Break track</source>
-        <translation>Break track</translation>
+        <source>Break slide</source>
+        <translation>Break slide</translation>
     </message>
     <message id="qml.charting.chain">
-        <source>Chain</source>
-        <translation>Chain</translation>
+        <source>Festival chain</source>
+        <translation>Festival chain</translation>
     </message>
     <message id="qml.charting.chain_hint">
         <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>

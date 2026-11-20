@@ -6,6 +6,7 @@
 #include "editor/ChartTokenScan.h"
 
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 
 namespace miacode::editor {
@@ -267,7 +268,8 @@ QString rotateNoteItem(const QString& item, int laneDelta)
     return rotated;
 }
 
-QString moveNote(const QString& text, int notePosition, int targetTokenPosition, int laneDelta, bool* moved)
+QString moveNote(const QString& text, int notePosition, int targetTokenPosition, int laneDelta, bool* moved,
+                 int division, double fraction)
 {
     if (moved != nullptr) {
         *moved = false;
@@ -284,6 +286,9 @@ QString moveNote(const QString& text, int notePosition, int targetTokenPosition,
     if (target > range.start) {
         target = qMax(range.start, target - range.length);
     }
+    if (division > 0) {
+        result = refineTokenAt(result, target, division, fraction, &target);
+    }
     const NoteItemInfo info = classifyNoteItem(item);
     const NoteAuthoringEditPlan plan = planNoteAuthoringEdit(
         result, target, NoteAuthoringAction::Add, info.target, item);
@@ -294,6 +299,92 @@ QString moveNote(const QString& text, int notePosition, int targetTokenPosition,
     if (moved != nullptr) {
         *moved = true;
     }
+    return result;
+}
+
+QString transformNotes(const QString& text, const QVector<int>& notePositions, int transform, int* changed)
+{
+    QString result = text;
+    QVector<LocatedNote> notes = locateDistinctNotes(text, notePositions);
+    std::reverse(notes.begin(), notes.end());
+    int count = 0;
+    for (const LocatedNote& note : notes) {
+        const QString transformed = miacode::chart_transform::transformChartSelectionText(
+            note.text, miacode::chart_transform::ChartTransformOp(transform));
+        if (transformed != note.text) {
+            result.replace(note.start, note.end - note.start, transformed);
+            ++count;
+        }
+    }
+    if (changed != nullptr) {
+        *changed = count;
+    }
+    return result;
+}
+
+QString refineTokenAt(const QString& text, int tokenPosition, int division, double fraction, int* targetToken)
+{
+    const int tokenStart = chartTokenStartAt(text, tokenPosition);
+    *targetToken = tokenStart;
+    const int comma = miacode::simai::nextChartComma(text, tokenStart);
+    if (division <= 0 || comma < 0) {
+        return text;
+    }
+    // The subdivision this one comma step is written in.
+    miacode::chart_selection::ChartSelectionBeatIndex index;
+    index.setText(text);
+    const auto parts = index.summarize(tokenStart, comma + 1).parts;
+    if (parts.size() != 1 || parts.constFirst().count != 1) {
+        return text;
+    }
+    const int current = qMax(1, parts.constFirst().denominator);
+    const int finer = int(std::lcm(qint64(current), qint64(division)));
+    const int steps = finer / current;
+    const int offset = int(std::lround(qBound(0.0, fraction, 1.0) * steps));
+    if (offset <= 0) {
+        return text;
+    }
+    if (offset >= steps) {
+        *targetToken = comma + 1;
+        return text;
+    }
+
+    // "{4}2,3," at 1/2 on a 1/16 grid becomes "{16}2,,,,{4}3,".
+    QString result = text;
+    const NoteAuthoringEditPlan finerControl = planTokenControl(result, tokenStart, QLatin1Char('{'),
+                                                                QString::number(finer));
+    result.replace(finerControl.replaceStart, finerControl.removalLength, finerControl.insertionText);
+    const int splitComma = miacode::simai::nextChartComma(result, tokenStart);
+    result.insert(splitComma + 1, QString(steps - 1, QLatin1Char(',')));
+    const int nextToken = splitComma + steps;
+    // Restore the old step unless the next token sets its own.
+    const ChartTokenScan following = scanChartToken(result, nextToken);
+    const int followingEnd = following.tokenEnd;
+    int content = nextToken;
+    while (content < followingEnd && result.at(content).isSpace()) {
+        ++content;
+    }
+    bool ownDivision = false;
+    for (int position = content; position < followingEnd; ++position) {
+        const QChar ch = result.at(position);
+        if (ch == QLatin1Char('{')) {
+            ownDivision = true;
+            break;
+        }
+        if (ch != QLatin1Char('(')) {
+            break;
+        }
+        position = result.indexOf(QLatin1Char(')'), position);
+        if (position < 0 || position >= followingEnd) {
+            break;
+        }
+    }
+    if (!ownDivision) {
+        const NoteAuthoringEditPlan restore = planTokenControl(result, nextToken, QLatin1Char('{'),
+                                                               QString::number(current));
+        result.replace(restore.replaceStart, restore.removalLength, restore.insertionText);
+    }
+    *targetToken = splitComma + offset;
     return result;
 }
 

@@ -223,6 +223,32 @@ bool TimelineQuickModel::resolveNearestCursorAnchorForSecond(
     return true;
 }
 
+bool TimelineQuickModel::resolveCursorSpanForSecond(
+    double second,
+    int* line,
+    int* col,
+    double* startSecond,
+    double* endSecond) const
+{
+    const auto after = std::upper_bound(
+        cursorAnchorsBySecond_.cbegin(),
+        cursorAnchorsBySecond_.cend(),
+        second + kTimelineEpsilon,
+        [](double target, const AbsoluteCursorAnchor& anchor) {
+            return target < anchor.second;
+        });
+    if (after == cursorAnchorsBySecond_.cbegin() || after == cursorAnchorsBySecond_.cend()) {
+        return false;
+    }
+    // Among anchors sharing the start second, the last one opens the beat.
+    const AbsoluteCursorAnchor& start = *std::prev(after);
+    *line = start.lineNumber;
+    *col = start.sourceCol;
+    *startSecond = start.second;
+    *endSecond = after->second;
+    return true;
+}
+
 QVector<QPoint> TimelineQuickModel::notePositionsInRange(
     double startSecond,
     double endSecond,

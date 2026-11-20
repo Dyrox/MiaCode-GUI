@@ -1,5 +1,7 @@
 #include "timeline/quick/TimelineLaneEditorItem.h"
 
+#include "core/video/PreviewSkinConfig.h"
+#include "timeline/TimelineGrid.h"
 #include "timeline/TimelineRenderData.h"
 #include "timeline/quick/TimelineQuickStateBridge.h"
 
@@ -7,6 +9,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QQuickWindow>
 #include <QPainterPath>
 #include <QWheelEvent>
 
@@ -267,6 +270,138 @@ QVector<TimelineLaneEditorItem::TempoMark> TimelineLaneEditorItem::tempoMarks() 
     return marks;
 }
 
+namespace {
+
+// The skin icon key for a note head, following the timeline's naming.
+QString skinIconType(const TimelineRenderNoteKind kind, quint32 flags)
+{
+    const bool mine = hasFlag(flags, TimelineRenderFlagIsMine);
+    const auto starType = [flags, mine](bool breakHead, bool eachHead) {
+        const bool doubled = hasFlag(flags, TimelineRenderFlagTapStarDouble);
+        if (mine) {
+            return QStringLiteral("star_mine");
+        }
+        if (breakHead) {
+            return doubled ? QStringLiteral("star_break_double") : QStringLiteral("star_break");
+        }
+        if (eachHead) {
+            return doubled ? QStringLiteral("star_each_double") : QStringLiteral("star_each");
+        }
+        return doubled ? QStringLiteral("star_double") : QStringLiteral("slide");
+    };
+    const bool isBreak = hasFlag(flags, TimelineRenderFlagIsBreak);
+    const bool isEach = hasFlag(flags, TimelineRenderFlagIsEach);
+    const auto variant = [&](const QString& base) {
+        return mine ? base + QStringLiteral("_mine")
+            : isBreak ? base + QStringLiteral("_break")
+            : isEach ? base + QStringLiteral("_each") : base;
+    };
+    switch (kind) {
+    case TimelineRenderNoteKind::Tap:
+        return hasFlag(flags, TimelineRenderFlagTapUsesStarMaterial) ? starType(isBreak, isEach) : variant(QStringLiteral("tap"));
+    case TimelineRenderNoteKind::Hold:
+        return variant(QStringLiteral("hold"));
+    case TimelineRenderNoteKind::Slide:
+    case TimelineRenderNoteKind::Wifi:
+        if (hasFlag(flags, TimelineRenderFlagSlideHeadUsesTapMaterial)) {
+            return hasFlag(flags, TimelineRenderFlagHeadBreak) ? QStringLiteral("tap_break")
+                : hasFlag(flags, TimelineRenderFlagHeadEach) ? QStringLiteral("tap_each") : QStringLiteral("tap");
+        }
+        return starType(hasFlag(flags, TimelineRenderFlagHeadBreak), hasFlag(flags, TimelineRenderFlagHeadEach));
+    case TimelineRenderNoteKind::Touch:
+        return variant(QStringLiteral("touch"));
+    case TimelineRenderNoteKind::TouchHold:
+        return variant(QStringLiteral("touch_hold"));
+    case TimelineRenderNoteKind::Unknown:
+        break;
+    }
+    return QString();
+}
+
+} // namespace
+
+bool TimelineLaneEditorItem::ensureSkinAssets()
+{
+    const QString directory = stateBridge_ != nullptr ? stateBridge_->skinDirectory() : QString();
+    if (!skinAssetsLoaded_ || directory != skinAssetsDirectory_) {
+        skinAssets_ = miacode::timeline::loadTimelineNoteAssets(directory);
+        skinAssetsDirectory_ = directory;
+        skinAssetsLoaded_ = true;
+        scaledIcons_.clear();
+    }
+    return !skinAssets_.noteIcons.isEmpty();
+}
+
+QPixmap TimelineLaneEditorItem::skinIcon(const QString& type, qreal size) const
+{
+    const qreal ratio = window() != nullptr ? window()->effectiveDevicePixelRatio() : 1.0;
+    const int pixels = qMax(1, qRound(size * ratio));
+    const QString key = QStringLiteral("%1|%2").arg(type).arg(pixels);
+    const auto cached = scaledIcons_.constFind(key);
+    if (cached != scaledIcons_.cend()) {
+        return cached.value();
+    }
+    const QPixmap source = skinAssets_.noteIcons.value(type);
+    if (source.isNull()) {
+        return QPixmap();
+    }
+    QPixmap scaled = source.scaled(QSize(pixels, pixels), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    scaled.setDevicePixelRatio(ratio);
+    scaledIcons_.insert(key, scaled);
+    return scaled;
+}
+
+bool TimelineLaneEditorItem::paintSkinNote(QPainter* painter, const VisibleNote& note, qreal radius) const
+{
+    const auto kind = TimelineRenderNoteKind(note.kind);
+    if ((kind == TimelineRenderNoteKind::Slide || kind == TimelineRenderNoteKind::Wifi)
+        && !hasFlag(note.flags, TimelineRenderFlagHasHeadStar)) {
+        return true;
+    }
+    if (kind == TimelineRenderNoteKind::Hold) {
+        return paintSkinHold(painter, note, radius);
+    }
+    const bool star = kind == TimelineRenderNoteKind::Slide || kind == TimelineRenderNoteKind::Wifi
+        || hasFlag(note.flags, TimelineRenderFlagTapUsesStarMaterial);
+    const QPixmap icon = skinIcon(skinIconType(kind, note.flags), radius * (star ? 2.9 : 2.5));
+    if (icon.isNull()) {
+        return false;
+    }
+    if (hasFlag(note.flags, TimelineRenderFlagIsEx) || hasFlag(note.flags, TimelineRenderFlagHeadEx)) {
+        painter->setPen(QPen(QColor(255, 255, 255, 170), 2.0));
+        painter->setBrush(Qt::NoBrush);
+        painter->drawEllipse(note.head, radius * 1.4, radius * 1.4);
+    }
+    const QSizeF size = icon.deviceIndependentSize();
+    painter->drawPixmap(QPointF(note.head.x() - size.width() / 2, note.head.y() - size.height() / 2), icon);
+    return true;
+}
+
+bool TimelineLaneEditorItem::paintSkinHold(QPainter* painter, const VisibleNote& note, qreal radius) const
+{
+    // The skin's hold is drawn upright: keep its two ends and stretch the
+    // middle row between the head (bottom) and the tail (top).
+    const QPixmap icon = skinIcon(skinIconType(TimelineRenderNoteKind::Hold, note.flags), radius * 2.5);
+    if (icon.isNull()) {
+        return false;
+    }
+    const QSizeF size = icon.deviceIndependentSize();
+    const qreal cap = size.height() * miacode::preview_skin::kHoldCapSliceRatioNumerator
+        / miacode::preview_skin::kHoldCapSliceRatioDenominator;
+    const qreal capPixels = cap * icon.devicePixelRatio();
+    const qreal left = note.head.x() - size.width() / 2;
+    const qreal top = qMin(note.tail.y(), note.head.y()) - size.height() / 2;
+    const qreal bottom = note.head.y() + size.height() / 2;
+    const QRectF source(0, 0, icon.width(), icon.height());
+    painter->drawPixmap(QRectF(left, top, size.width(), cap),
+                        icon, QRectF(0, 0, icon.width(), capPixels));
+    painter->drawPixmap(QRectF(left, top + cap, size.width(), qMax<qreal>(0.0, bottom - top - 2 * cap)),
+                        icon, QRectF(0, source.height() / 2, icon.width(), 1));
+    painter->drawPixmap(QRectF(left, bottom - cap, size.width(), cap),
+                        icon, QRectF(0, icon.height() - capPixels, icon.width(), capPixels));
+    return true;
+}
+
 void TimelineLaneEditorItem::paintNote(QPainter* painter, const VisibleNote& note, qreal radius) const
 {
     const auto kind = TimelineRenderNoteKind(note.kind);
@@ -359,10 +494,25 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
         painter->drawLine(QPointF(xForLane(hoveredLane_), 0), QPointF(xForLane(hoveredLane_), bottomY));
     }
 
-    // Grid: one line per comma of the chart, measure lines in red with their
-    // number in the gutter.
+    // Grid: the 分音 grid faintly, one line per comma of the chart, and
+    // measure lines in red with their number in the gutter.
     const double top = secondForY(0.0);
     const double bottom = secondForY(bottomY);
+    if (stateBridge_ != nullptr && gridDivision_ > 0) {
+        const TimelineRenderSnapshot& snapshot = stateBridge_->renderSnapshot();
+        painter->setPen(QPen(kColumnLineColor, 1));
+        double second = miacode::timeline::snapSecondToGrid(snapshot, bottom, gridDivision_);
+        for (int guard = 0; second <= top && guard < 2000; ++guard) {
+            const double step = miacode::timeline::gridStepSecondsAt(snapshot, second, gridDivision_);
+            if (step <= 0.0) {
+                break;
+            }
+            const qreal y = yForSecond(second);
+            painter->drawLine(QPointF(gutterWidth(), y), QPointF(lanesRight(), y));
+            // Re-snap each step so a BPM change re-anchors the grid.
+            second = miacode::timeline::snapSecondToGrid(snapshot, second + step, gridDivision_);
+        }
+    }
     painter->setPen(QPen(kBeatLineColor, 1));
     for (const double second : beatSeconds(bottom, top)) {
         const qreal y = yForSecond(second);
@@ -397,10 +547,14 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
         }
     }
 
+    ensureSkinAssets();
     // Bodies first, heads on top.
     const qreal radius = qBound<qreal>(6.0, cw * 0.32, 14.0);
     for (const VisibleNote& note : notes) {
         const auto kind = TimelineRenderNoteKind(note.kind);
+        if (kind == TimelineRenderNoteKind::Hold && !skinAssets_.noteIcons.isEmpty()) {
+            continue;  // drawn whole by paintSkinHold
+        }
         if (kind == TimelineRenderNoteKind::Hold || kind == TimelineRenderNoteKind::TouchHold) {
             const QColor color = kind == TimelineRenderNoteKind::TouchHold
                 ? kTouchColor : headColor(note.flags, kTapColor);
@@ -418,8 +572,11 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
             painter->drawPolygon(starPolygon(note.tail, radius * 0.55));
         }
     }
+    const bool skinned = !skinAssets_.noteIcons.isEmpty();
     for (const VisibleNote& note : notes) {
-        paintNote(painter, note, radius);
+        if (!skinned || !paintSkinNote(painter, note, radius)) {
+            paintNote(painter, note, radius);
+        }
     }
 
     // The judgement line: white over a red edge, with the BPM in effect.
@@ -472,10 +629,14 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
         const int lane = laneAtX(currentPoint_.x());
         if (lane > 0) {
             const qreal grab = drag_ == Drag::MoveNote ? yForSecond(pressSecond_) - pressPoint_.y() : 0.0;
+            qreal y = currentPoint_.y() + grab;
+            if (stateBridge_ != nullptr && gridDivision_ > 0) {
+                y = yForSecond(miacode::timeline::snapSecondToGrid(stateBridge_->renderSnapshot(), secondForY(y),
+                                                                   gridDivision_));
+            }
             painter->setPen(QPen(kAccentColor, 1.5));
             painter->setBrush(Qt::NoBrush);
-            painter->drawRoundedRect(QRectF(xForLane(lane) - cw / 2 + 2, currentPoint_.y() + grab - radius,
-                                            cw - 4, radius * 2), 3, 3);
+            painter->drawRoundedRect(QRectF(xForLane(lane) - cw / 2 + 2, y - radius, cw - 4, radius * 2), 3, 3);
         }
     }
 

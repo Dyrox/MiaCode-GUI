@@ -25,6 +25,11 @@ class NoteAuthoringController final : public QObject
     Q_PROPERTY(bool starTap READ starTap WRITE setStarTap NOTIFY optionsChanged)
     Q_PROPERTY(bool firework READ firework WRITE setFirework NOTIFY optionsChanged)
     Q_PROPERTY(bool wifi READ wifi WRITE setWifi NOTIFY optionsChanged)
+    // 伪双押: notes of one beat joined with `` ` `` instead of `/`.
+    Q_PROPERTY(bool pseudoEach READ pseudoEach WRITE setPseudoEach NOTIFY optionsChanged)
+    // 分音: timeline presses snap to a 1/N bar grid; 0 snaps to the chart's
+    // own commas.
+    Q_PROPERTY(int gridDivision READ gridDivision WRITE setGridDivision NOTIFY optionsChanged)
     // Slide head: 0 star, 1 tap-shaped `@`, 2 no head `?`, 3 no head with an
     // immediate star `!`.
     Q_PROPERTY(int slideHead READ slideHead WRITE setSlideHead NOTIFY optionsChanged)
@@ -56,6 +61,10 @@ public:
     void setFirework(bool enabled) { assign(&firework_, enabled); }
     bool wifi() const { return wifi_; }
     void setWifi(bool enabled) { assign(&wifi_, enabled); }
+    bool pseudoEach() const { return pseudoEach_; }
+    void setPseudoEach(bool enabled) { assign(&pseudoEach_, enabled); }
+    int gridDivision() const { return gridDivision_; }
+    void setGridDivision(int division) { assign(&gridDivision_, qBound(0, division, 384)); }
     int slideHead() const { return slideHead_; }
     void setSlideHead(int head) { assign(&slideHead_, qBound(0, head, 3)); }
     bool slideBreak() const { return slideBreak_; }
@@ -90,6 +99,8 @@ public:
     Q_INVOKABLE void stepBeat(int step);
     Q_INVOKABLE void setBpm(const QString& bpm);
     Q_INVOKABLE void setDivision(const QString& division);
+    // A chart_transform::ChartTransformOp applied to the selected notes.
+    Q_INVOKABLE void transformSelection(int transform);
 
 signals:
     void toolChanged();
@@ -123,6 +134,8 @@ private:
     bool starTap_ = false;
     bool firework_ = false;
     bool wifi_ = false;
+    bool pseudoEach_ = false;
+    int gridDivision_ = 16;
     int slideHead_ = 0;
     bool slideBreak_ = false;
     bool slideChain_ = false;

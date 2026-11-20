@@ -808,7 +808,20 @@ void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRe
         return;
     case Action::Move: {
         const int target = edit::textPositionAt(text, request.targetLine, request.targetColumn);
-        if (target >= 0) applyText(edit::moveNote(text, tokenPosition, target, request.laneDelta));
+        if (target >= 0) {
+            applyText(edit::moveNote(text, tokenPosition, target, request.laneDelta, nullptr,
+                                     request.gridDivision, request.tokenFraction));
+        }
+        return;
+    }
+    case Action::TransformSelection: {
+        const QVector<int> positions = selectionPositions();
+        if (positions.isEmpty()) {
+            publishAuthoringStatus(qtTrId("qml.charting.status_no_selection"));
+            return;
+        }
+        noteSelection_ = {};
+        applyText(edit::transformNotes(text, positions, request.transform));
         return;
     }
     case Action::SelectNotes:
@@ -890,6 +903,17 @@ void ScintillaEditorBridge::noteAuthoring(const miacode::editor::NoteAuthoringRe
         break;
     case Action::Toggle:
         break;
+    }
+    if (request.gridDivision > 0 && request.line > 0) {
+        // A grid point between two commas: split that beat, then write there.
+        int target = tokenPosition;
+        QString refined = edit::refineTokenAt(text, tokenPosition, request.gridDivision, request.tokenFraction, &target);
+        const auto plan = edit::planNoteAuthoringEdit(refined, target, resolved.action, resolved.target,
+                                                      resolved.item, resolved.separator);
+        if (!plan.valid) return;
+        refined.replace(plan.replaceStart, plan.removalLength, plan.insertionText);
+        applyText(refined);
+        return;
     }
     applyAuthoring(controller_->noteAuthoring(text, anchor, position, tokenPosition, resolved));
 }

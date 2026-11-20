@@ -406,7 +406,10 @@ Item {
 
     TimelineLaneEditorItem {
         id: laneEditor
-        anchors.fill: sourceEditor
+        anchors.left: sourceEditor.left
+        anchors.top: sourceEditor.top
+        anchors.bottom: sourceEditor.bottom
+        anchors.right: chartingPanel.left
         visible: root.sourceVisible && root.guiCharting && root.timelineSession !== null
         stateBridge: root.timelineSession ? root.timelineSession.stateBridge : null
         noteAuthoringEnabled: visible && root.noteAuthoring.tool !== 0
@@ -416,7 +419,40 @@ Item {
             root.timelineSession.authoringGesture(kind, secondary, second, endSecond, lane, endLane, onNote)
         onAuthoringDeleteRequested: root.noteAuthoring.deleteSelection()
         onNavigateRequested: second => root.timelineSession.headerNavigate(second)
-
+        gridDivision: root.noteAuthoring ? root.noteAuthoring.gridDivision : 0
+        // Number keys pick the note kind and letters toggle its marks; with
+        // the command key, the note operations.
+        function shortcutFor(event) {
+            const command = (event.modifiers & Qt.ControlModifier) !== 0
+            const shift = (event.modifiers & Qt.ShiftModifier) !== 0
+            const plain = event.modifiers === Qt.NoModifier
+            const toggles = { [Qt.Key_B]: "breakNote", [Qt.Key_X]: "exNote", [Qt.Key_M]: "pseudoEach",
+                              [Qt.Key_S]: "slideBreak", [Qt.Key_W]: "wifi", [Qt.Key_T]: "slideChain",
+                              [Qt.Key_F]: "firework" }
+            if (plain && event.key >= Qt.Key_0 && event.key <= Qt.Key_5)
+                return () => root.noteAuthoring.tool = event.key - Qt.Key_0
+            if (plain && toggles[event.key] !== undefined)
+                return () => root.noteAuthoring[toggles[event.key]] = !root.noteAuthoring[toggles[event.key]]
+            if (!command)
+                return null
+            switch (event.key) {
+            case Qt.Key_C: return shift ? null : () => root.noteAuthoring.copySelection()
+            case Qt.Key_X: return shift ? null : () => root.noteAuthoring.cutSelection()
+            case Qt.Key_V: return shift ? null : () => root.noteAuthoring.paste()
+            case Qt.Key_F: return () => root.noteAuthoring.transformSelection(shift ? 1 : 0)
+            case Qt.Key_R: return () => root.noteAuthoring.transformSelection(shift ? 3 : 4)
+            }
+            return null
+        }
+        // Claim these before the menu shortcuts while the lane editor has focus.
+        Keys.onShortcutOverride: event => event.accepted = laneEditor.shortcutFor(event) !== null
+        Keys.onPressed: event => {
+            const action = laneEditor.shortcutFor(event)
+            if (action === null)
+                return
+            action()
+            event.accepted = true
+        }
         // The editor drops a selection once its text changes.
         Connections {
             target: root.noteAuthoring
@@ -427,10 +463,22 @@ Item {
         }
     }
 
-    // 代码 / GUI: how this difficulty is charted.
+    ChartingPanel {
+        id: chartingPanel
+        anchors.top: sourceEditor.top
+        anchors.bottom: sourceEditor.bottom
+        anchors.right: sourceEditor.right
+        width: laneEditor.visible ? Math.max(300, Math.min(500, sourceEditor.width * 0.52)) : 0
+        visible: laneEditor.visible
+        noteAuthoring: root.noteAuthoring
+        laneEditor: laneEditor
+    }
+
+    // 代码 / GUI: how this difficulty is charted. In GUI mode it sits over the
+    // lanes' corner so the panel keeps its header.
     Row {
         anchors.top: sourceEditor.top
-        anchors.right: sourceEditor.right
+        anchors.right: root.guiCharting ? laneEditor.right : sourceEditor.right
         anchors.topMargin: 6
         anchors.rightMargin: 18
         z: 2

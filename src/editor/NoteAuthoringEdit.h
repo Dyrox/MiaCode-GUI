@@ -38,6 +38,9 @@ enum class NoteAuthoringAction {
     // Write `item` as the token's `(BPM)` or `{N}` control.
     SetBpm,
     SetDivision,
+    // Mirror or rotate the selected notes in place (`transform`: a
+    // chart_transform::ChartTransformOp value).
+    TransformSelection,
 };
 
 struct NoteAuthoringRequest {
@@ -62,6 +65,13 @@ struct NoteAuthoringRequest {
     // SelectNotes: note positions as (column, line), 1-based.
     QVector<QPoint> notes;
     int step = 0;
+    // `/` joins notes of one beat; `` ` `` writes a pseudo-each.
+    QChar separator = QLatin1Char('/');
+    // Grid placement between two commas: split the named token's step on a
+    // 1/gridDivision grid and write at `tokenFraction` of it (0 < f < 1).
+    int gridDivision = 0;
+    double tokenFraction = 0.0;
+    int transform = 0;
 };
 
 enum class NoteItemKind {
@@ -99,7 +109,8 @@ NoteAuthoringEditPlan planNoteAuthoringEdit(
     int cursorPosition,
     NoteAuthoringAction action,
     const QString& target,
-    const QString& item);
+    const QString& item,
+    QChar separator = QLatin1Char('/'));
 
 // Start of the comma token holding a cursor position.
 int chartTokenStartAt(const QString& text, int cursorPosition);

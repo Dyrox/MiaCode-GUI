@@ -61,9 +61,10 @@ public:
         if (skinDirectory != cachedSkinDirectory_ || icons_.isEmpty()) {
             cachedSkinDirectory_ = skinDirectory;
             const auto assets = miacode::timeline::loadTimelineNoteAssets(skinDirectory);
-            for (const QString& type : {QStringLiteral("tap"), QStringLiteral("hold"),
-                     QStringLiteral("slide"), QStringLiteral("touch"), QStringLiteral("tap_break")}) {
-                icons_.insert(type, visibleNoteImage(assets.noteIcons.value(type).toImage()));
+            // Every skin icon, so the charting panel can show each note kind.
+            icons_.clear();
+            for (auto it = assets.noteIcons.cbegin(); it != assets.noteIcons.cend(); ++it) {
+                icons_.insert(it.key(), visibleNoteImage(it.value().toImage()));
             }
         }
 

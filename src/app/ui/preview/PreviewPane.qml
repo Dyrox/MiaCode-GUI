@@ -122,7 +122,9 @@ Rectangle {
         anchors.right: parent.right
         anchors.top: heading.bottom
         noteAuthoring: root.noteAuthoring
-        visible: root.noteAuthoring !== null && !root.exportPageActive && root.documentAvailable
+        // In GUI charting the editor's panel holds these tools.
+        visible: root.noteAuthoring !== null && !root.noteAuthoring.guiMode
+                 && !root.exportPageActive && root.documentAvailable
         height: visible ? implicitHeight : 0
     }
 

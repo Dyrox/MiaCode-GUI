@@ -325,6 +325,8 @@ miacode_add_module(miacode_timeline
     SOURCES
         src/timeline/TimelineAnalysisPublication.h
         src/timeline/TimelineCadenceArbitrationPolicy.h
+        src/timeline/TimelineGrid.cpp
+        src/timeline/TimelineGrid.h
         src/timeline/TimelineNoteAssets.cpp
         src/timeline/TimelineNoteAssets.h
         src/timeline/TimelineQuickModel.cpp

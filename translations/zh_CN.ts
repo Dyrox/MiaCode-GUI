@@ -3689,19 +3689,19 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     </message>
     <message id="qml.charting.break">
         <source>Break</source>
-        <translation>Break</translation>
+        <translation>绝赞</translation>
     </message>
     <message id="qml.charting.ex">
         <source>EX</source>
-        <translation>EX</translation>
+        <translation>保护</translation>
     </message>
     <message id="qml.charting.star">
-        <source>Star</source>
-        <translation>星形</translation>
+        <source>Star tap</source>
+        <translation>星形Tap</translation>
     </message>
     <message id="qml.charting.wifi">
-        <source>Wifi</source>
-        <translation>Wifi</translation>
+        <source>Wifi slide</source>
+        <translation>Wifi星星</translation>
     </message>
     <message id="qml.charting.firework">
         <source>Firework</source>
@@ -3722,6 +3722,66 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.hint">
         <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
         <translation>写入编辑器光标所在的拍。左键添加或取消，右键删除。Hold：点起点，移动光标，再点一次。Slide：从起点按键拖到终点按键。鼠标在预览上时，←→ 写入并前进一拍，↑↓ 只移动一拍。在时间轴上：点击放置，拖动音符移动它，在空白处拖动框选；用 Hold 工具时沿同一轨拖动画 Hold。</translation>
+    </message>
+    <message id="qml.charting.grid">
+        <source>Grid</source>
+        <translation>分音</translation>
+    </message>
+    <message id="qml.charting.grid_chart">
+        <source>Chart</source>
+        <translation>谱面</translation>
+    </message>
+    <message id="qml.charting.type">
+        <source>Type</source>
+        <translation>类型</translation>
+    </message>
+    <message id="qml.charting.pseudo_each">
+        <source>Pseudo each</source>
+        <translation>伪双押</translation>
+    </message>
+    <message id="qml.charting.edit">
+        <source>Edit</source>
+        <translation>编辑</translation>
+    </message>
+    <message id="qml.charting.operate">
+        <source>Transform</source>
+        <translation>操作</translation>
+    </message>
+    <message id="qml.charting.beat">
+        <source>Beat</source>
+        <translation>节拍</translation>
+    </message>
+    <message id="qml.charting.panel_tap">
+        <source>Tap</source>
+        <translation>Tap编辑</translation>
+    </message>
+    <message id="qml.charting.panel_touch">
+        <source>Touch</source>
+        <translation>Touch编辑</translation>
+    </message>
+    <message id="qml.charting.panel_operations">
+        <source>Notes</source>
+        <translation>Note操作</translation>
+    </message>
+    <message id="qml.charting.panel_editor">
+        <source>Editor settings</source>
+        <translation>编辑器设定</translation>
+    </message>
+    <message id="qml.charting.slide_head">
+        <source>Head</source>
+        <translation>星头</translation>
+    </message>
+    <message id="qml.charting.hold_length_short">
+        <source>Length</source>
+        <translation>长度</translation>
+    </message>
+    <message id="qml.charting.zoom">
+        <source>Zoom</source>
+        <translation>缩放</translation>
+    </message>
+    <message id="qml.charting.panel_hint">
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</source>
+        <translation>按键：1–5 选择音符，0 放下；B X M S W T F 切换对应选项。滚轮按拍移动，Ctrl+滚轮缩放；在空白处拖动框选。</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>
@@ -3752,12 +3812,12 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>无头即出 !</translation>
     </message>
     <message id="qml.charting.slide_break">
-        <source>Break track</source>
-        <translation>Break 轨</translation>
+        <source>Break slide</source>
+        <translation>绝赞星星</translation>
     </message>
     <message id="qml.charting.chain">
-        <source>Chain</source>
-        <translation>连段</translation>
+        <source>Festival chain</source>
+        <translation>应用Festival特性</translation>
     </message>
     <message id="qml.charting.chain_hint">
         <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>

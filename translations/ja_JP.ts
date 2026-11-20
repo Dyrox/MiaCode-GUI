@@ -3696,12 +3696,12 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>EX</translation>
     </message>
     <message id="qml.charting.star">
-        <source>Star</source>
-        <translation>スター</translation>
+        <source>Star tap</source>
+        <translation>スタータップ</translation>
     </message>
     <message id="qml.charting.wifi">
-        <source>Wifi</source>
-        <translation>Wifi</translation>
+        <source>Wifi slide</source>
+        <translation>Wifi スライド</translation>
     </message>
     <message id="qml.charting.firework">
         <source>Firework</source>
@@ -3722,6 +3722,66 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
     <message id="qml.charting.hint">
         <source>Writes into the beat at the editor cursor. Left click adds or removes, right click erases. Hold: click the start, move the cursor, click again. Slide: drag from the start button to the end button. Arrow keys over the preview: Left/Right write and step a beat, Up/Down step. On the timeline: click places, drag a note moves it, drag over empty space selects; with Hold tools a drag along one lane draws a hold.</source>
         <translation>エディタのカーソルがある拍に書き込みます。左クリックで追加・解除、右クリックで削除。Hold：始点をクリックし、カーソルを動かしてもう一度クリック。Slide：始点のボタンから終点のボタンまでドラッグ。プレビュー上で ←→ は書き込んで 1 拍進み、↑↓ は拍だけ移動。タイムラインでは、クリックで配置、ノーツをドラッグで移動、空白をドラッグで選択。Hold ツールでは同じレーンに沿ったドラッグで Hold。</translation>
+    </message>
+    <message id="qml.charting.grid">
+        <source>Grid</source>
+        <translation>分割</translation>
+    </message>
+    <message id="qml.charting.grid_chart">
+        <source>Chart</source>
+        <translation>譜面</translation>
+    </message>
+    <message id="qml.charting.type">
+        <source>Type</source>
+        <translation>種類</translation>
+    </message>
+    <message id="qml.charting.pseudo_each">
+        <source>Pseudo each</source>
+        <translation>疑似同時押し</translation>
+    </message>
+    <message id="qml.charting.edit">
+        <source>Edit</source>
+        <translation>編集</translation>
+    </message>
+    <message id="qml.charting.operate">
+        <source>Transform</source>
+        <translation>操作</translation>
+    </message>
+    <message id="qml.charting.beat">
+        <source>Beat</source>
+        <translation>拍</translation>
+    </message>
+    <message id="qml.charting.panel_tap">
+        <source>Tap</source>
+        <translation>Tap 編集</translation>
+    </message>
+    <message id="qml.charting.panel_touch">
+        <source>Touch</source>
+        <translation>Touch 編集</translation>
+    </message>
+    <message id="qml.charting.panel_operations">
+        <source>Notes</source>
+        <translation>ノーツ操作</translation>
+    </message>
+    <message id="qml.charting.panel_editor">
+        <source>Editor settings</source>
+        <translation>エディタ設定</translation>
+    </message>
+    <message id="qml.charting.slide_head">
+        <source>Head</source>
+        <translation>頭</translation>
+    </message>
+    <message id="qml.charting.hold_length_short">
+        <source>Length</source>
+        <translation>長さ</translation>
+    </message>
+    <message id="qml.charting.zoom">
+        <source>Zoom</source>
+        <translation>拡大</translation>
+    </message>
+    <message id="qml.charting.panel_hint">
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select.</source>
+        <translation>キー：1–5 でノーツを選び 0 で解除。B X M S W T F で各オプション切替。ホイールで拍移動、Ctrl+ホイールで拡大、空白をドラッグで選択。</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>
@@ -3752,12 +3812,12 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>頭なし即出 !</translation>
     </message>
     <message id="qml.charting.slide_break">
-        <source>Break track</source>
-        <translation>Break 軌道</translation>
+        <source>Break slide</source>
+        <translation>Break スライド</translation>
     </message>
     <message id="qml.charting.chain">
-        <source>Chain</source>
-        <translation>連結</translation>
+        <source>Festival chain</source>
+        <translation>Festival 連結</translation>
     </message>
     <message id="qml.charting.chain_hint">
         <source>Each drag continues the last slide from where it ended. Right click ends the chain.</source>

@@ -269,6 +269,7 @@ QString NoteAuthoringController::keyboardStep(int key, const QString& hovered)
 bool NoteAuthoringController::send(NoteAuthoringRequest request)
 {
     request.defaultDuration = holdLength_;
+    request.separator = pseudoEach_ ? QLatin1Char('`') : QLatin1Char('/');
     return editorSync_.requestNoteAuthoring(request);
 }
 
@@ -329,6 +330,15 @@ void NoteAuthoringController::setBpm(const QString& bpm)
 void NoteAuthoringController::setDivision(const QString& division)
 {
     sendSimple(NoteAuthoringAction::SetDivision, QStringLiteral("-"), division.trimmed());
+}
+
+void NoteAuthoringController::transformSelection(int transform)
+{
+    NoteAuthoringRequest request;
+    request.action = NoteAuthoringAction::TransformSelection;
+    request.target = QStringLiteral("-");
+    request.transform = transform;
+    send(request);
 }
 
 void NoteAuthoringController::setPendingTarget(const QString& target)

@@ -295,7 +295,7 @@ miacode::editor::SimaiTextEditResult EditorController::noteAuthoring(
     const miacode::editor::NoteAuthoringRequest& request) const
 {
     const auto plan = miacode::editor::planNoteAuthoringEdit(
-        text, tokenPosition, request.action, request.target, request.item);
+        text, tokenPosition, request.action, request.target, request.item, request.separator);
     if (!plan.valid) return untouched(text, anchor, position);
     return authoringReplacement(text, anchor, position, plan.replaceStart,
                                 plan.replaceStart + plan.removalLength, plan.insertionText, plan.tokenStart);

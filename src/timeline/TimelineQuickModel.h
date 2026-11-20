@@ -95,6 +95,10 @@ public:
     // The beat start (a token start after a comma or at a line start) nearest
     // to `second`, for snapping timeline edits to the chart's own grid.
     bool resolveNearestCursorAnchorForSecond(double second, int* line, int* col, double* anchorSecond) const;
+    // The beat whose step holds `second`: its start (line, col, second) and
+    // the second the next beat starts at.
+    bool resolveCursorSpanForSecond(double second, int* line, int* col, double* startSecond,
+                                    double* endSecond) const;
     // Source positions (x = column, y = line) of notes whose start lies in
     // [startSecond, endSecond] on lanes firstLane..lastLane.
     QVector<QPoint> notePositionsInRange(double startSecond, double endSecond, int firstLane, int lastLane) const;

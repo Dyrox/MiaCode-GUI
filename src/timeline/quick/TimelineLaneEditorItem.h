@@ -1,9 +1,13 @@
 #pragma once
 
+#include <QHash>
+#include <QPixmap>
 #include <QPointer>
 #include <QQuickPaintedItem>
 #include <QtQml/qqmlregistration.h>
 #include <QVector>
+
+#include "timeline/TimelineNoteAssets.h"
 
 class TimelineQuickStateBridge;
 
@@ -22,6 +26,9 @@ class TimelineLaneEditorItem : public QQuickPaintedItem
     Q_PROPERTY(bool authoringSpanEnabled MEMBER authoringSpanEnabled_ NOTIFY appearanceChanged)
     // Vertical zoom.
     Q_PROPERTY(double pixelsPerSecond READ pixelsPerSecond WRITE setPixelsPerSecond NOTIFY appearanceChanged)
+    // 分音: grid lines and snapping on a 1/N bar grid; 0 shows the chart's
+    // commas only.
+    Q_PROPERTY(int gridDivision MEMBER gridDivision_ NOTIFY appearanceChanged)
 
 public:
     explicit TimelineLaneEditorItem(QQuickItem* parent = nullptr);
@@ -96,12 +103,22 @@ private:
     bool hitNote(const QPointF& point, double* second, int* lane) const;
     void finishPress(const QPointF& point);
     void paintNote(QPainter* painter, const VisibleNote& note, qreal radius) const;
+    // Skin icons, the same set the horizontal timeline draws with.
+    bool ensureSkinAssets();
+    QPixmap skinIcon(const QString& type, qreal size) const;
+    bool paintSkinNote(QPainter* painter, const VisibleNote& note, qreal radius) const;
+    bool paintSkinHold(QPainter* painter, const VisibleNote& note, qreal radius) const;
 
     QPointer<TimelineQuickStateBridge> stateBridge_;
     bool noteAuthoringEnabled_ = false;
     bool authoringSpanEnabled_ = false;
     double pixelsPerSecond_ = 150.0;
+    int gridDivision_ = 16;
     int hoveredLane_ = 0;
+    miacode::timeline::TimelineNoteAssetSet skinAssets_;
+    QString skinAssetsDirectory_;
+    bool skinAssetsLoaded_ = false;
+    mutable QHash<QString, QPixmap> scaledIcons_;
 
     Drag drag_ = Drag::None;
     Qt::MouseButton button_ = Qt::NoButton;

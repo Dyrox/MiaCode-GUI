@@ -128,7 +128,8 @@ NoteAuthoringEditPlan planNoteAuthoringEdit(
     int cursorPosition,
     NoteAuthoringAction action,
     const QString& target,
-    const QString& item)
+    const QString& item,
+    QChar separator)
 {
     NoteAuthoringEditPlan plan;
     const QString wanted = normalizedTarget(target);
@@ -208,7 +209,7 @@ NoteAuthoringEditPlan planNoteAuthoringEdit(
         plan.insertionText = addition;
     } else {
         plan.replaceStart = token.lastContentEnd;
-        plan.insertionText = QLatin1Char('/') + addition;
+        plan.insertionText = (separator == QLatin1Char('`') ? separator : QLatin1Char('/')) + addition;
     }
     plan.valid = true;
     return plan;
