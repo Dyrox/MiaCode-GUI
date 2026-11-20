@@ -13,6 +13,7 @@
 #include <QQuickWindow>
 #include <QPainterPath>
 #include <QWheelEvent>
+#include <QtMath>
 
 #include <algorithm>
 #include <array>
@@ -401,6 +402,45 @@ bool TimelineLaneEditorItem::paintSkinNote(QPainter* painter, const VisibleNote&
     return true;
 }
 
+bool TimelineLaneEditorItem::paintSkinSlideTrack(QPainter* painter, const VisibleNote& note, qreal radius) const
+{
+    // As classic editors draw a slide: the skin's track arrows in a row from
+    // the start mark to the end, pointing the way the star goes.
+    const auto kind = TimelineRenderNoteKind(note.kind);
+    const QString type = kind == TimelineRenderNoteKind::Wifi
+        ? (hasFlag(note.flags, TimelineRenderFlagTrackBreak) ? QStringLiteral("wifi_track_break")
+           : hasFlag(note.flags, TimelineRenderFlagSlideEach) ? QStringLiteral("wifi_track_each")
+                                                                : QStringLiteral("wifi_track"))
+        : (hasFlag(note.flags, TimelineRenderFlagTrackBreak) ? QStringLiteral("slide_track_break")
+           : hasFlag(note.flags, TimelineRenderFlagSlideEach) ? QStringLiteral("slide_track_each")
+                                                                : QStringLiteral("slide_track"));
+    const QPixmap arrow = skinIcon(type, radius * 2.1);
+    const QPointF delta = note.tail - note.start;
+    const qreal length = std::hypot(delta.x(), delta.y());
+    if (arrow.isNull() || length < radius) {
+        return false;
+    }
+    const QSizeF size = arrow.deviceIndependentSize();
+    // The slide sprite points left and the wifi one down; turn either along
+    // the segment.
+    const qreal native = kind == TimelineRenderNoteKind::Wifi ? 90.0 : 180.0;
+    const qreal angle = qRadiansToDegrees(std::atan2(delta.y(), delta.x())) - native;
+    const qreal spacing = qMax<qreal>(4.0, size.width() * 0.85);
+    const int count = qMax(1, int(std::floor(length / spacing)));
+    painter->save();
+    painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
+    for (int index = 0; index < count; ++index) {
+        const QPointF center = note.start + delta * ((index + 0.5) / count);
+        painter->save();
+        painter->translate(center);
+        painter->rotate(angle);
+        painter->drawPixmap(QPointF(-size.width() / 2.0, -size.height() / 2.0), arrow);
+        painter->restore();
+    }
+    painter->restore();
+    return true;
+}
+
 bool TimelineLaneEditorItem::paintSkinHold(QPainter* painter, const VisibleNote& note, qreal radius) const
 {
     // The skin's hold is drawn upright: keep its two ends and stretch the
@@ -614,8 +654,10 @@ void TimelineLaneEditorItem::paint(QPainter* painter)
                 painter->drawLine(QPointF(note.start.x() - radius * 0.7, note.start.y()),
                                   QPointF(note.start.x() + radius * 0.7, note.start.y()));
             }
-            painter->setPen(QPen(color, 2.0, Qt::DashLine));
-            painter->drawLine(note.start, note.tail);
+            if (!paintSkinSlideTrack(painter, note, radius)) {
+                painter->setPen(QPen(color, 2.0, Qt::DashLine));
+                painter->drawLine(note.start, note.tail);
+            }
             painter->setPen(QPen(color, 1.5));
             painter->setBrush(Qt::NoBrush);
             painter->drawPolygon(starPolygon(note.tail, radius * 0.55));

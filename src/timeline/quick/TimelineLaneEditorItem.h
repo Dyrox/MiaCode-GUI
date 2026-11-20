@@ -191,6 +191,7 @@ private:
     QPixmap skinIcon(const QString& type, qreal size) const;
     bool paintSkinNote(QPainter* painter, const VisibleNote& note, qreal radius) const;
     bool paintSkinHold(QPainter* painter, const VisibleNote& note, qreal radius) const;
+    bool paintSkinSlideTrack(QPainter* painter, const VisibleNote& note, qreal radius) const;
 
     QPointer<TimelineQuickStateBridge> stateBridge_;
     bool noteAuthoringEnabled_ = false;
