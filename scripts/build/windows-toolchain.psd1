@@ -102,7 +102,7 @@
         # {channel} expands to '_<channel>' when MIACODE_PACKAGE_CHANNEL is set.
         # Separators stay underscores except inside the version, which keeps its
         # own dots and hyphens (e.g. 2.0.0-alpha).
-        DistNamePattern = 'MiaCode_{version}{channel}_win_{arch}'
+        DistNamePattern = 'MiaCodeGUI_{version}{channel}_win_{arch}'
         DistArchName = @{
             x64   = 'x64'
             arm64 = 'arm64'
@@ -168,7 +168,7 @@
         # 'toolchain-runtime:<DllName>' expands to app\<DllName> and is only
         # required for the toolchain that ships that runtime.
         RequiredRelativePaths = @(
-            'MiaCode.exe',
+            'MiaCodeGUI.exe',
             'Start_MiaCode_Debug.bat',
             'logs',
             'logs\worker-hwnd',
@@ -176,7 +176,7 @@
             'licenses\Resource-Han-Rounded-OFL.txt',
             'LICENSE',
             'THIRD_PARTY_NOTICES.md',
-            'app\MiaCode.exe',
+            'app\MiaCodeGUI.exe',
             'app\ffmpeg\ffmpeg.exe',
             'app-qt:Qt6Core', 'app-qt:Qt6Gui', 'app-qt:Qt6Multimedia',
             'app-qt:Qt6Network', 'app-qt:Qt6OpenGL', 'app-qt:Qt6Quick', 'app-qt:Qt6Qml',

@@ -169,7 +169,7 @@ function Ensure-PackageBuildReady {
     $cachePath = Join-Path $BuildDir "CMakeCache.txt"
     $generatedHeaderPath = Join-Path $BuildDir "generated\\AppVersion.h"
     $buildOutputDir = Resolve-BuildOutputDir -BuildDir $BuildDir -Config $Config
-    $exePath = Join-Path $buildOutputDir "MiaCode.exe"
+    $exePath = Join-Path $buildOutputDir "MiaCodeGUI.exe"
     $launcherExePath = Join-Path $buildOutputDir "MiaCodeLauncher.exe"
 
     if (!(Test-Path $cachePath)) {
@@ -249,7 +249,7 @@ function Resolve-BuildOutputDir {
     # per-configuration subdirectory; single-config generators (Ninja, Make)
     # write them straight into the build directory.
     $configDir = Join-Path $BuildDir $Config
-    if (Test-Path (Join-Path $configDir "MiaCode.exe")) {
+    if (Test-Path (Join-Path $configDir "MiaCodeGUI.exe")) {
         return $configDir
     }
     return $BuildDir
@@ -411,16 +411,16 @@ New-Item -ItemType Directory -Path $DistDir | Out-Null
 $appDir = Join-Path $DistDir "app"
 New-Item -ItemType Directory -Path $appDir | Out-Null
 
-# Real MiaCode.exe goes inside app/; the wrapper at root is named
-# MiaCode.exe and forwards execution to it.
-Copy-Item $exePath (Join-Path $appDir "MiaCode.exe") -Force
+# Real MiaCodeGUI.exe goes inside app/; the wrapper at root is named
+# MiaCodeGUI.exe and forwards execution to it.
+Copy-Item $exePath (Join-Path $appDir "MiaCodeGUI.exe") -Force
 
 $buildOutputDir = Resolve-BuildOutputDir -BuildDir $BuildDir -Config $Config
 $launcherExe = Join-Path $buildOutputDir "MiaCodeLauncher.exe"
 if (!(Test-Path $launcherExe)) {
     throw "MiaCodeLauncher.exe not found after build: $launcherExe"
 }
-Copy-Item $launcherExe (Join-Path $DistDir "MiaCode.exe") -Force
+Copy-Item $launcherExe (Join-Path $DistDir "MiaCodeGUI.exe") -Force
 
 $debugLauncherSrc = Join-Path $repoRoot "scripts\\debug\\Start_MiaCode_Debug.bat"
 if (!(Test-Path $debugLauncherSrc)) {
@@ -448,7 +448,7 @@ Invoke-NativeCommand -FilePath $deployTool -Arguments @(
     "--compiler-runtime",
     "--no-translations",
     "--qmldir", (Join-Path $repoRoot "src"),
-    (Join-Path $appDir "MiaCode.exe")
+    (Join-Path $appDir "MiaCodeGUI.exe")
 ) | Out-Host
 
 $requiredQtRuntimeDllBaseNames = $toolchainData.Package.QtRuntimeDllBaseNames

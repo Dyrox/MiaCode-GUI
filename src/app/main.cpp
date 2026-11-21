@@ -520,7 +520,7 @@ int main(int argc, char* argv[])
 #ifdef Q_OS_WIN
     setWindowsAppUserModelId();
 #endif
-    app.setApplicationName("MiaCode");
+    app.setApplicationName("MiaCodeGUI");
     app.setApplicationVersion(MIACODE_DISPLAY_VERSION_STRING);
     const QIcon appIcon = applicationWindowIcon();
 #ifndef Q_OS_MACOS

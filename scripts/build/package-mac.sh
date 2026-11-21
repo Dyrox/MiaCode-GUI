@@ -73,7 +73,7 @@ VERSION="$(parse_version "$ROOT_DIR/CMakeLists.txt")"
 # Release artifact name: <name>_<version>[_<channel>]_<os>_<arch>. Separators
 # stay underscores except inside the version, which keeps its own dots and
 # hyphens (e.g. 2.0.0-alpha).
-PACKAGE_NAME="MiaCode_${VERSION}"
+PACKAGE_NAME="MiaCodeGUI_${VERSION}"
 if [[ -n "$PACKAGE_CHANNEL" ]]; then
   PACKAGE_NAME+="_${PACKAGE_CHANNEL}"
 fi
@@ -232,7 +232,7 @@ is_external_dylib() {
 stage_macos_ffmpeg_runtime() {
   local app_path="$1"
   local frameworks_dir="$app_path/Contents/Frameworks"
-  local app_binary="$app_path/Contents/MacOS/MiaCode"
+  local app_binary="$app_path/Contents/MacOS/MiaCodeGUI"
   local library source_path destination_path macho_path dependency dependency_base
 
   if [[ ! -d "$frameworks_dir" ]]; then
@@ -354,7 +354,7 @@ remove_qt_ffmpeg_backend() {
 
 verify_no_external_ffmpeg_dylib_references() {
   local app_path="$1"
-  local app_binary="$app_path/Contents/MacOS/MiaCode"
+  local app_binary="$app_path/Contents/MacOS/MiaCodeGUI"
   local dependency macho_path rpath
   local verification_failed=0
 
@@ -429,12 +429,12 @@ fi
 package_step "Building MiaCode with $PACKAGE_JOBS concurrent jobs"
 cmake "${build_args[@]}"
 
-APP_PATH="$BUILD_DIR/MiaCode.app"
+APP_PATH="$BUILD_DIR/MiaCodeGUI.app"
 if [[ ! -d "$APP_PATH" ]]; then
-  APP_PATH="$BUILD_DIR/Release/MiaCode.app"
+  APP_PATH="$BUILD_DIR/Release/MiaCodeGUI.app"
 fi
 if [[ ! -d "$APP_PATH" ]]; then
-  echo "MiaCode.app not found under $BUILD_DIR" >&2
+  echo "MiaCodeGUI.app not found under $BUILD_DIR" >&2
   exit 1
 fi
 
@@ -497,7 +497,7 @@ required_sfx_files=(
   # the FIRST candidate in AssetPaths.h::findAssetRoot(), so a loose
   # $DIST_DIR/assets copy would never be read — it just doubles the package
   # size and misleads users into editing files the app ignores.
-  bundle_assets_dir="$DIST_DIR/MiaCode.app/Contents/Resources/assets"
+  bundle_assets_dir="$DIST_DIR/MiaCodeGUI.app/Contents/Resources/assets"
   rm -rf "$bundle_assets_dir"
   mkdir -p "$(dirname "$bundle_assets_dir")"
   cp -R "$ROOT_DIR/assets" "$bundle_assets_dir"
@@ -511,7 +511,7 @@ fi
 
 ffmpeg_src="$ROOT_DIR/third_party/ffmpeg/macos/ffmpeg"
 if [[ -f "$ffmpeg_src" && -s "$ffmpeg_src" ]]; then
-  ffmpeg_bin_dir="$DIST_DIR/MiaCode.app/Contents/MacOS/ffmpeg"
+  ffmpeg_bin_dir="$DIST_DIR/MiaCodeGUI.app/Contents/MacOS/ffmpeg"
   # A locally runnable app bundle can already contain a direct `ffmpeg` file
   # beside MiaCode. Release packages use the documented `ffmpeg/ffmpeg`
   # layout; normalize the copied bundle before creating that directory.
@@ -534,45 +534,45 @@ else
 fi
 
 cat >"$DIST_DIR/README.txt" <<'EOF'
-MiaCode macOS 包
+MiaCodeGUI macOS 包
 
 启动
-打开 MiaCode.app。
+打开 MiaCodeGUI.app。
 
 Gatekeeper 提示
 从下载渠道取得的应用可能显示 Gatekeeper 提示。可使用以下任一方式启动：
 
-1. 在 Finder 中按住 Control 点按 MiaCode.app，选择“打开”，随后在确认窗口中选择“打开”。
+1. 在 Finder 中按住 Control 点按 MiaCodeGUI.app，选择“打开”，随后在确认窗口中选择“打开”。
 2. 在此包目录打开终端，执行：
-   xattr -dr com.apple.quarantine "MiaCode.app"
+   xattr -dr com.apple.quarantine "MiaCodeGUI.app"
 
 调试启动
 打开 Start_MiaCode_Debug.command，应用将以诊断模式启动，日志保存在包目录的 logs/ 中。
 
 包内容
-MiaCode.app：应用程序
+MiaCodeGUI.app：应用程序
 Start_MiaCode_Debug.command：诊断启动器
 LICENSE、THIRD_PARTY_NOTICES.md 和 licenses/：许可证与第三方声明
 EOF
 
 cat >"$DIST_DIR/README_EN.txt" <<'EOF'
-MiaCode macOS Package
+MiaCodeGUI macOS Package
 
 Launch
-Open MiaCode.app.
+Open MiaCodeGUI.app.
 
 Gatekeeper Prompt
 Apps downloaded from the internet may show a Gatekeeper prompt. Use either method below:
 
-1. In Finder, Control-click MiaCode.app, choose Open, then choose Open in the confirmation dialog.
+1. In Finder, Control-click MiaCodeGUI.app, choose Open, then choose Open in the confirmation dialog.
 2. Open Terminal in this package directory and run:
-   xattr -dr com.apple.quarantine "MiaCode.app"
+   xattr -dr com.apple.quarantine "MiaCodeGUI.app"
 
 Debug Launch
-Open Start_MiaCode_Debug.command to start MiaCode in diagnostic mode. Logs are written to logs/ in this package directory.
+Open Start_MiaCode_Debug.command to start MiaCodeGUI in diagnostic mode. Logs are written to logs/ in this package directory.
 
 Package Contents
-MiaCode.app: application
+MiaCodeGUI.app: application
 Start_MiaCode_Debug.command: diagnostic launcher
 LICENSE, THIRD_PARTY_NOTICES.md, and licenses/: license and third-party notices
 EOF
@@ -591,34 +591,34 @@ if [[ ! -x "$debug_launcher_path" ]]; then
 fi
 
 package_step "Deploying Qt frameworks, plugins, and QML imports (macdeployqt may be quiet for several minutes)"
-macdeployqt "$DIST_DIR/MiaCode.app" -qmldir="$ROOT_DIR/src" -always-overwrite
+macdeployqt "$DIST_DIR/MiaCodeGUI.app" -qmldir="$ROOT_DIR/src" -always-overwrite
 package_step "Removing non-release Qt helper components"
-assert_no_packaged_extensions "$DIST_DIR/MiaCode.app"
+assert_no_packaged_extensions "$DIST_DIR/MiaCodeGUI.app"
 
 # Qt Multimedia can pull Homebrew's dynamically linked ffprobe into the bundle.
 # MiaCode does not invoke it; export uses the pinned static ffmpeg below. Leaving
 # it in place would ship build-machine dylib references and fail relocation.
-rm -f "$DIST_DIR/MiaCode.app/Contents/MacOS/ffprobe"
+rm -f "$DIST_DIR/MiaCodeGUI.app/Contents/MacOS/ffprobe"
 
 # MiaCode does not use Qt SQL. macdeployqt still deploys the sqldrivers
 # plugins, and the odbc/psql/mimer ones reference third-party dylibs
 # (homebrew libiodbc, Postgres.app, mimer) that only exist on the build
 # machine — dead weight that also breaks strict signature/dependency scans.
-rm -rf "$DIST_DIR/MiaCode.app/Contents/PlugIns/sqldrivers"
+rm -rf "$DIST_DIR/MiaCodeGUI.app/Contents/PlugIns/sqldrivers"
 
 package_step "Removing the unused Qt FFmpeg 7 media backend"
-remove_qt_ffmpeg_backend "$DIST_DIR/MiaCode.app"
+remove_qt_ffmpeg_backend "$DIST_DIR/MiaCodeGUI.app"
 
 package_step "Staging the self-contained FFmpeg 8.1 preview runtime"
-stage_macos_ffmpeg_runtime "$DIST_DIR/MiaCode.app"
-strip_absolute_build_rpaths "$DIST_DIR/MiaCode.app/Contents/MacOS/MiaCode"
+stage_macos_ffmpeg_runtime "$DIST_DIR/MiaCodeGUI.app"
+strip_absolute_build_rpaths "$DIST_DIR/MiaCodeGUI.app/Contents/MacOS/MiaCodeGUI"
 
 if [[ "$THIN_SINGLE_ARCH_PACKAGE" == "ON" ]]; then
   package_step "Thinning all bundled Mach-O files to arm64"
-  python3 "$ROOT_DIR/scripts/build/package.py" thin "$DIST_DIR/MiaCode.app" "arm64"
+  python3 "$ROOT_DIR/scripts/build/package.py" thin "$DIST_DIR/MiaCodeGUI.app" "arm64"
 fi
 
-bass_frameworks_dir="$DIST_DIR/MiaCode.app/Contents/Frameworks"
+bass_frameworks_dir="$DIST_DIR/MiaCodeGUI.app/Contents/Frameworks"
 required_bass_libraries=(
   "libbass.dylib"
   "libbassmix.dylib"
@@ -642,10 +642,10 @@ if [[ -n "$MACOS_CODESIGN_IDENTITY" ]]; then
     echo "codesign not found in PATH" >&2
     exit 1
   fi
-  codesign --force --deep --sign "$MACOS_CODESIGN_IDENTITY" "$DIST_DIR/MiaCode.app"
+  codesign --force --deep --sign "$MACOS_CODESIGN_IDENTITY" "$DIST_DIR/MiaCodeGUI.app"
 fi
 
-assert_no_packaged_extensions "$DIST_DIR/MiaCode.app"
+assert_no_packaged_extensions "$DIST_DIR/MiaCodeGUI.app"
 
 package_step "Creating 7z archive"
 ARCHIVE_PATH="${DIST_DIR}.7z"

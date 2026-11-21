@@ -45,6 +45,14 @@ QStringList migrationSourcePaths()
     QStringList sources;
     const QString v1 = configFilePath(QStringLiteral("preferences.json"));
     if (!v1.isEmpty()) sources.append(v1);
+    // On first launch MiaCodeGUI imports the settings MiaCode saved under its own name.
+    const QString configRoot = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    if (!configRoot.isEmpty() && QCoreApplication::applicationName() == QStringLiteral("MiaCodeGUI")) {
+        QDir legacyRoot(configRoot);
+        if (legacyRoot.cdUp()) {
+            sources.append(legacyRoot.filePath(QStringLiteral("MiaCode/preferences_v2.json")));
+        }
+    }
     sources.append(QDir(QCoreApplication::applicationDirPath()).filePath(".miacode_preferences.json"));
     return sources;
 }

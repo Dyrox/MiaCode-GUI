@@ -8,12 +8,12 @@ set "MIACODE_LOG_DIR=%APP_DIR%\logs"
 
 if not exist "%MIACODE_LOG_DIR%" mkdir "%MIACODE_LOG_DIR%"
 
-echo MiaCode debug mode
-echo   App : %APP_DIR%\MiaCode.exe
+echo MiaCodeGUI debug mode
+echo   App : %APP_DIR%\MiaCodeGUI.exe
 echo   Logs: %MIACODE_LOG_DIR%
 echo.
 
-start "" /wait "%APP_DIR%\MiaCode.exe" --debug %*
+start "" /wait "%APP_DIR%\MiaCodeGUI.exe" --debug %*
 set "EXIT_CODE=%ERRORLEVEL%"
 
 echo.

@@ -41,7 +41,7 @@
 namespace {
 
 constexpr const wchar_t* kAppSubdir = L"app";
-constexpr const wchar_t* kRealExeName = L"MiaCode.exe";
+constexpr const wchar_t* kRealExeName = L"MiaCodeGUI.exe";
 
 // =============================================================
 // String helpers — Win32-only, no STL <algorithm> dependency.
@@ -339,7 +339,7 @@ void showBilingualError(const std::wstring& zh, const std::wstring& en, DWORD la
         zh + errZh +
         L"\n\n────────────────────────────────────\n\n" +
         en + errEn;
-    ::MessageBoxW(nullptr, body.c_str(), L"MiaCode",
+    ::MessageBoxW(nullptr, body.c_str(), L"MiaCodeGUI",
                   MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
 }
 
@@ -755,12 +755,12 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
     wchar_t modulePath[MAX_PATH];
     const DWORD len = ::GetModuleFileNameW(nullptr, modulePath, MAX_PATH);
     if (len == 0 || len >= MAX_PATH) {
-        ::MessageBoxW(nullptr, L"Failed to resolve launcher path.", L"MiaCode", MB_ICONERROR);
+        ::MessageBoxW(nullptr, L"Failed to resolve launcher path.", L"MiaCodeGUI", MB_ICONERROR);
         return 1;
     }
     wchar_t* lastSep = ::wcsrchr(modulePath, L'\\');
     if (lastSep == nullptr) {
-        ::MessageBoxW(nullptr, L"Launcher path has no directory component.", L"MiaCode", MB_ICONERROR);
+        ::MessageBoxW(nullptr, L"Launcher path has no directory component.", L"MiaCodeGUI", MB_ICONERROR);
         return 1;
     }
     *lastSep = L'\0';
@@ -783,7 +783,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
             L"Real MiaCode.exe not found at:\n" + realExe + L"\n\n"
             L"Solution:\n"
             L"Re-extract MiaCode-*.zip preserving the full app\\ subfolder";
-        ::MessageBoxW(nullptr, msg.c_str(), L"MiaCode",
+        ::MessageBoxW(nullptr, msg.c_str(), L"MiaCodeGUI",
                       MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
         return 1;
     }
