@@ -3832,8 +3832,8 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>Zoom</translation>
     </message>
     <message id="qml.charting.panel_hint">
-        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</source>
-        <translation>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</translation>
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel or ←/→ step a beat, %1+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</source>
+        <translation>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel or ←/→ step a beat, %1+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>

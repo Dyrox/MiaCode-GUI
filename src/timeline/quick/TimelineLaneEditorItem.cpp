@@ -1582,12 +1582,22 @@ void TimelineLaneEditorItem::wheelEvent(QWheelEvent* event)
         return;
     }
     if (zoomModifier) {
-        zoomAround(event->position().y(), delta > 0 ? 1.15 : 1.0 / 1.15);
+        // 15% a notch (120 units); a Windows touchpad pinch arrives as many
+        // small Ctrl+wheel steps and zooms in proportion.
+        zoomAround(event->position().y(), std::pow(1.15, delta / 120.0));
         event->accept();
         return;
     }
-    // Scrolling up moves forward in time, one beat per notch.
-    stepBeat(delta > 0 ? 1 : -1);
+    // Scrolling up moves forward in time, one beat per notch. Precision
+    // touchpads send fractions of a notch; they add up to one.
+    if ((wheelRemainder_ > 0) != (delta > 0)) {
+        wheelRemainder_ = 0;
+    }
+    wheelRemainder_ += delta;
+    while (qAbs(wheelRemainder_) >= 120) {
+        stepBeat(wheelRemainder_ > 0 ? 1 : -1);
+        wheelRemainder_ -= wheelRemainder_ > 0 ? 120 : -120;
+    }
     event->accept();
 }
 

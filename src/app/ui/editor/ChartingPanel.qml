@@ -546,7 +546,7 @@ Rectangle {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: qsTrId("qml.charting.panel_hint")
+                    text: qsTrId("qml.charting.panel_hint").arg(Qt.platform.os === "osx" ? "⌘" : "Ctrl")
                     wrapMode: Text.Wrap
                     color: Theme.colors.text.secondary
                     font.family: Theme.uiFont

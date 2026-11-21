@@ -212,6 +212,8 @@ private:
     QString pointerIcon_;
     QElapsedTimer scrollClock_;
     double scrollTarget_ = 0.0;
+    // Wheel units short of a whole notch.
+    int wheelRemainder_ = 0;
     // Smart zoom's way back.
     double smartZoomRestore_ = 0.0;
     QPointF hoverPoint_{-1.0, -1.0};

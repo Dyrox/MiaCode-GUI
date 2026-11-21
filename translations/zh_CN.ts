@@ -3832,8 +3832,8 @@ The file may be open in preview, a media player, File Explorer preview pane, or 
         <translation>缩放</translation>
     </message>
     <message id="qml.charting.panel_hint">
-        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel steps a beat, Ctrl+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</source>
-        <translation>按键：1–5 选择音符，0 放下；B X M S W T F 切换对应选项。滚轮按拍移动，Ctrl+滚轮缩放；在空白处拖动框选，拖动 Hold 尾部改长度。点击 T 列选定时间后在预览上点判定区放置 Touch；星星形状也在预览上选择或画出。选中星星工具时点击星星可重新放置。</translation>
+        <source>Keys: 1-5 pick a note and 0 puts it down; B X M S W T F toggle the marks. Wheel or ←/→ step a beat, %1+wheel zooms; drag over empty space to select, a hold's tail to change its length. Click the T column to pick a time, then place touches on the preview; a slide's shape is picked on the preview too. With Slide, click a star to re-place its slide.</source>
+        <translation>按键：1–5 选择音符，0 放下；B X M S W T F 切换对应选项。滚轮或 ←/→ 按拍移动，%1+滚轮缩放；在空白处拖动框选，拖动 Hold 尾部改长度。点击 T 列选定时间后在预览上点判定区放置 Touch；星星形状也在预览上选择或画出。选中星星工具时点击星星可重新放置。</translation>
     </message>
     <message id="qml.charting.mode_code">
         <source>Code</source>
